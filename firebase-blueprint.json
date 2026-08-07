@@ -1,0 +1,189 @@
+{
+  "entities": {
+    "News": {
+      "title": "News Article",
+      "description": "A news article with title, content, image, and category.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The headline of the news."
+        },
+        "content": {
+          "type": "string",
+          "description": "The full content of the news."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "The URL of the news image."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the news (e.g., National, Politics)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the news was created."
+        },
+        "authorUid": {
+          "type": "string",
+          "description": "The UID of the user who created the news."
+        }
+      },
+      "required": ["title", "content", "imageUrl", "category", "createdAt", "authorUid"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with role and basic info.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "The user's email."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"],
+          "description": "The role of the user."
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "Reporter": {
+      "title": "Reporter",
+      "description": "A reporter or staff member of Sami TV.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "designation": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "location": { "type": "string" },
+        "division": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "order": { "type": "integer" }
+      },
+      "required": ["name", "designation", "imageUrl", "location", "division"]
+    },
+    "Media": {
+      "title": "Media Item",
+      "description": "A photo or video for the media gallery.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "type": { "type": "string", "enum": ["image", "video"] },
+        "videoUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "imageUrl", "type", "createdAt"]
+    },
+    "Ticker": {
+      "title": "Scrolling Ticker",
+      "description": "The text for the breaking news ticker.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "updatedAt"]
+    },
+    "Ad": {
+      "title": "Advertisement",
+      "description": "An advertisement banner with image and optional link.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "link": { "type": "string" },
+        "position": { "type": "string", "enum": ["sidebar", "content", "popup"] },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "imageUrl", "position", "active", "createdAt"]
+    },
+    "Application": {
+      "title": "Reporter Application",
+      "description": "An application from a user to join as a reporter.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "location": { "type": "string" },
+        "division": { "type": "string" },
+        "experience": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "accepted", "rejected"] }
+      },
+      "required": ["name", "phone", "location", "division", "createdAt", "status"]
+    },
+    "Message": {
+      "title": "Contact Message",
+      "description": "A message sent from the contact form.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "phone", "subject", "message", "createdAt"]
+    },
+    "Schedule": {
+      "title": "Program Schedule",
+      "description": "An entry for the TV program schedule.",
+      "type": "object",
+      "properties": {
+        "time": { "type": "string", "description": "Time of the program (e.g., 09:00 AM)." },
+        "title": { "type": "string", "description": "Title of the program." },
+        "active": { "type": "boolean", "description": "Whether the program is currently live." },
+        "order": { "type": "integer", "description": "The order of the program in the schedule." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["time", "title", "active", "order", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/news/{newsId}": {
+      "schema": "News",
+      "description": "Collection of news articles."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles."
+    },
+    "/reporters/{reporterId}": {
+      "schema": "Reporter",
+      "description": "Collection of reporters."
+    },
+    "/media/{mediaId}": {
+      "schema": "Media",
+      "description": "Collection of media items."
+    },
+    "/settings/ticker": {
+      "schema": "Ticker",
+      "description": "The breaking news ticker setting."
+    },
+    "/ads/{adId}": {
+      "schema": "Ad",
+      "description": "Collection of advertisements."
+    },
+    "/applications/{applicationId}": {
+      "schema": "Application",
+      "description": "Collection of reporter applications."
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Collection of contact messages."
+    },
+    "/schedules/{scheduleId}": {
+      "schema": "Schedule",
+      "description": "Program schedule for Live TV."
+    }
+  }
+}
