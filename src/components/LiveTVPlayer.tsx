@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactPlayer from 'react-player';
 import { Radio, Loader2, AlertCircle, Maximize, RefreshCw, Volume2, VolumeX, Minimize, Play, Pause, Settings, Info, Layout } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,9 +16,26 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
   const [showControls, setShowControls] = useState(true);
   const [quality, setQuality] = useState('Auto');
   const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const playerRef = useRef<any>(null);
 
-  const liveUrl = "https://padmaonline.duckdns.org:8088/SamiTV/index.m3u8";
+  const liveUrl = "https://zibo1.tvhunter.top/SAMI_TV/index.m3u8";
   const Player = ReactPlayer as any;
+
+  // Clean up safely when unmounting so play() promise is never interrupted
+  useEffect(() => {
+    return () => {
+      try {
+        if (playerRef.current) {
+          const internal = playerRef.current.getInternalPlayer();
+          if (internal && typeof internal.pause === 'function') {
+            internal.pause();
+          }
+        }
+      } catch {
+        // Safe cleanup
+      }
+    };
+  }, []);
 
   // Auto-hide controls
   useEffect(() => {
@@ -170,6 +187,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       <div className={`w-full h-full relative z-10 ${loading || error ? 'opacity-0' : 'opacity-100'} transition-opacity duration-1000`}>
         {Player && (
           <Player
+            ref={playerRef}
             url={liveUrl}
             playing={playing}
             controls={false}
@@ -178,16 +196,24 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
             height="100%"
             onReady={() => setLoading(false)}
             onStart={() => { setLoading(false); setPlaying(true); }}
-            onError={() => {
+            onError={(err: any) => {
+              console.warn('Live TV player playback notice:', err);
               setError(true);
               setLoading(false);
+              setPlaying(false);
             }}
             config={{
               file: {
                 forceHLS: true,
+                hlsOptions: {
+                  enableWorker: true,
+                  lowLatencyMode: true,
+                  backBufferLength: 90,
+                },
                 attributes: {
                   controlsList: 'nodownload',
                   referrerPolicy: 'no-referrer',
+                  crossOrigin: 'anonymous',
                   onWaiting: () => setLoading(true),
                   onPlaying: () => setLoading(false),
                   style: { width: '100%', height: '100%', objectFit: isTheaterMode ? 'contain' : 'cover' }
