@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Navbar } from './components/Navbar';
+import { BreakingNews } from './components/BreakingNews';
 import { SAMILogo } from './components/SAMILogo';
 import { HeroSection } from './components/HeroSection';
 import { Sidebar } from './components/Sidebar';
@@ -51,16 +52,17 @@ export default function App() {
           currentPage={location.pathname} 
           currentCategory={currentCategory} 
         />
+        {location.pathname !== '/admin' && <BreakingNews />}
       </div>
       
-      <main className={(location.pathname === '/download-app' || location.pathname === '/family' || location.pathname === '/about' || location.pathname === '/contact' || location.pathname === '/admin' || location.pathname === '/live' || location.pathname.startsWith('/news/') || location.pathname.startsWith('/category/')) ? "flex-grow w-full" : "flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-[1650px]"}>
+      <main className={(location.pathname === '/download-app' || location.pathname === '/family' || location.pathname === '/about' || location.pathname === '/contact' || location.pathname === '/admin' || location.pathname === '/live' || location.pathname.startsWith('/news/') || location.pathname.startsWith('/category/')) ? "flex-grow w-full" : "flex-grow container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1650px]"}>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
           >
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Home onNavigate={handleNavigate} onNewsClick={handleNewsClick} />} />

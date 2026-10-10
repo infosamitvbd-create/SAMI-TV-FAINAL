@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { collection, query, where, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { ArrowLeft, Clock, Calendar, ChevronsRight } from 'lucide-react';
 
 interface NewsCategoryProps {
   category: string;
@@ -16,11 +16,13 @@ export const NewsCategory: React.FC<NewsCategoryProps> = ({ category, onBack, on
 
   useEffect(() => {
     setLoading(true);
-    const q = query(
-      collection(db, 'news'),
-      where('category', '==', category),
-      orderBy('createdAt', 'desc')
-    );
+    const q = category === 'all'
+      ? query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(60))
+      : query(
+          collection(db, 'news'),
+          where('category', '==', category),
+          orderBy('createdAt', 'desc')
+        );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const news = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -34,71 +36,152 @@ export const NewsCategory: React.FC<NewsCategoryProps> = ({ category, onBack, on
     return () => unsubscribe();
   }, [category]);
 
+  const displayTitle = category === 'all' ? 'সকল' : category;
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 15 }} 
+      initial={{ opacity: 0, y: 12 }} 
       animate={{ opacity: 1, y: 0 }} 
-      className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6"
+      className="w-full max-w-[1650px] mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6"
     >
-      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
-        <div className="flex items-center justify-between border-b-2 border-sami-red pb-3 mb-6">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button 
-              onClick={onBack}
-              className="text-sami-red hover:text-red-700 font-extrabold text-xs sm:text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <ArrowLeft size={16} /> হোমে ফিরুন
-            </button>
-            <span className="text-slate-300 font-light">|</span>
-            <h2 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-              {category} <span className="text-sami-red">সংবাদ</span>
-            </h2>
+      {/* MOBILE ONLY VIEW: Compact 3-Column Card Grid */}
+      <div className="sm:hidden bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        <div className="m-2 mb-0 px-3 py-1.5 bg-[#f8f9fa] border border-slate-200/80 rounded-lg flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1 h-4 bg-[#990000] rounded-full shrink-0" />
+            <h1 className="text-[15px] font-extrabold text-[#8b0000] leading-snug tracking-tight">
+              {displayTitle} সংবাদ
+            </h1>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-            মোট নিউজ: {newsList.length}টি
-          </span>
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-[11px] font-bold text-[#8b0000] active:opacity-75 cursor-pointer"
+          >
+            <ArrowLeft size={12} />
+            <span>প্রচ্ছদ</span>
+          </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-slate-400 font-bold text-sm">লোডিং...</div>
+          <div className="text-center py-12 text-slate-400 font-bold text-xs">সংবাদ লোড হচ্ছে...</div>
         ) : newsList.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-5">
+          <div className="p-2.5 grid grid-cols-3 gap-x-2 gap-y-3.5">
             {newsList.map((news) => (
-              <div 
-                key={news.id} 
-                className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-2xs hover:shadow-lg transition-all duration-300 border border-slate-200/80 flex flex-col hover:-translate-y-1"
+              <div
+                key={news.id}
                 onClick={() => onNewsClick(news)}
+                className="flex flex-col h-full group cursor-pointer min-w-0"
               >
-                <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
-                  <img 
-                    src={news.imageUrl} 
-                    alt={news.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                <div className="w-full aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 mb-1.5 border border-slate-100">
+                  <img
+                    src={news.imageUrl}
+                    alt={news.title}
+                    className="w-full h-full object-cover group-active:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                   />
-                  {news.category && (
-                    <span className="absolute top-2 left-2 bg-sami-red text-white text-[9px] font-black px-2 py-0.5 rounded shadow-xs">
-                      {news.category}
-                    </span>
-                  )}
                 </div>
-                <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-grow">
-                  <h3 className="font-bold text-slate-900 leading-snug group-hover:text-sami-red transition-colors line-clamp-2 text-xs sm:text-sm">
-                    {news.title}
-                  </h3>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-3 font-semibold pt-2 border-t border-slate-100">
-                    <Clock size={11} className="text-sami-red shrink-0" />
+                <h3 className="font-extrabold text-[11px] leading-[1.3] text-slate-900 group-hover:text-sami-red transition-colors line-clamp-2 mb-1">
+                  {news.title}
+                </h3>
+                <p className="text-[9.5px] leading-[1.35] text-slate-500 line-clamp-2 mb-1.5 font-normal">
+                  {news.content
+                    ? news.content.replace(/<[^>]*>/g, '').slice(0, 75) + '...'
+                    : 'বিস্তারিত সংবাদ পড়ুন...'}
+                </p>
+                <div className="border-t border-slate-200/80 pt-1.5 mt-auto flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1 text-[8.5px] text-slate-500 font-medium whitespace-nowrap truncate">
+                    <Calendar size={9} className="text-slate-500 shrink-0" />
                     <span className="truncate">
-                      {news.createdAt?.toDate ? news.createdAt.toDate().toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                      {news.createdAt?.toDate
+                        ? news.createdAt.toDate().toLocaleDateString('bn-BD', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })
+                        : 'সামি টিভি'}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-0.5 text-[10px] font-extrabold text-[#990000]">
+                    <span>বিস্তারিত</span>
+                    <ChevronsRight size={11} className="text-red-300 stroke-[2.5]" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 text-slate-400 font-bold text-sm">
-            এই ক্যাটাগরিতে এখনও কোনো নিউজ নেই।
+          <div className="text-center py-12 text-slate-400 font-bold text-xs">
+            এই বিভাগে এখনও কোনো সংবাদ প্রকাশিত হয়নি।
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP & TABLET VIEW (3-Column Rows with Hairline Dividers matching screenshot) */}
+      <div className="hidden sm:block bg-white p-5 lg:p-6 rounded-xl border border-slate-200/90 shadow-2xs">
+        <div className="flex items-center justify-between border-b border-slate-200/90 pb-3.5 mb-5">
+          <div className="flex items-center gap-4 min-w-0">
+            <button 
+              onClick={onBack}
+              className="text-sami-red hover:text-red-700 font-bold text-sm flex items-center gap-1 transition-colors cursor-pointer shrink-0"
+            >
+              <ArrowLeft size={16} />
+              <span>প্রচ্ছদ</span>
+            </button>
+            <span className="text-slate-300">·</span>
+            <h1 className="text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate">
+              {displayTitle} <span className="text-sami-red">সংবাদ</span>
+            </h1>
+          </div>
+          <span className="text-xs font-semibold text-slate-500 shrink-0 tabular-nums">
+            মোট {newsList.length}টি
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-slate-400 font-bold text-sm">সংবাদ লোড হচ্ছে...</div>
+        ) : newsList.length > 0 ? (
+          <div className="flex flex-col">
+            {Array.from({ length: Math.ceil(newsList.length / 3) }).map((_, rowIndex) => {
+              const rowItems = newsList.slice(rowIndex * 3, rowIndex * 3 + 3);
+              return (
+                <React.Fragment key={rowIndex}>
+                  {rowIndex > 0 && (
+                    <div className="border-t border-slate-200/90 my-4 lg:my-5" />
+                  )}
+                  <div className="grid grid-cols-3 divide-x divide-slate-200/90">
+                    {rowItems.map((news, idx) => (
+                      <div
+                        key={news.id}
+                        onClick={() => onNewsClick(news)}
+                        className={`group cursor-pointer flex flex-col ${
+                          idx === 0
+                            ? 'pr-4 lg:pr-5'
+                            : idx === 1
+                            ? 'px-4 lg:px-5'
+                            : 'pl-4 lg:pl-5'
+                        }`}
+                      >
+                        <div className="w-full aspect-[16/10] overflow-hidden rounded-lg bg-slate-100 border border-slate-100 mb-2.5">
+                          <img
+                            src={news.imageUrl}
+                            alt={news.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <h3 className="font-bold text-[15px] lg:text-[17px] leading-[1.38] text-slate-900 group-hover:text-sami-red transition-colors line-clamp-3">
+                          {news.title}
+                        </h3>
+                      </div>
+                    ))}
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16 text-slate-400 font-bold text-sm">
+            এই বিভাগে এখনও কোনো সংবাদ প্রকাশিত হয়নি।
           </div>
         )}
       </div>

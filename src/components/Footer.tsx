@@ -1,13 +1,66 @@
 import React from 'react';
-import { Facebook, Youtube, Twitter, Instagram, Mail, Phone, MapPin, Layout, Tv, UserCheck, Lock } from 'lucide-react';
+import { Facebook, Youtube, Twitter, Instagram, Mail, Phone, MapPin, Layout, Tv, Lock } from 'lucide-react';
 import { SAMILogo } from './SAMILogo';
 
 export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavigate }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#111111] text-white pt-8 pb-4 mt-auto border-t border-white/5 text-xs sm:text-[13px] hidden md:block">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1650px]">
+    <footer className="bg-[#111111] text-white mt-auto border-t border-white/5 text-xs sm:text-[13px]">
+      {/* Compact Minimalist Mobile Footer (<md) */}
+      <div className="md:hidden px-4 py-6 space-y-4 text-center">
+        <div className="flex flex-col items-center gap-1.5" onClick={() => onNavigate('/')}>
+          <span className="text-base font-black tracking-tight text-white">
+            SAMI <span className="text-sami-red">TV</span>
+          </span>
+          <p className="text-[11px] text-gray-400 font-medium max-w-xs">
+            সর্বশেষ সংবাদ নির্ভুল ও বস্তুনিষ্ঠভাবে প্রকাশ করে সামি টিভি।
+          </p>
+        </div>
+
+        {/* Inline Quick Links */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-bold text-gray-300">
+          <button onClick={() => onNavigate('/about')} className="hover:text-sami-red transition-colors">আমাদের সম্পর্কে</button>
+          <span className="text-gray-600">·</span>
+          <button onClick={() => onNavigate('/family')} className="hover:text-sami-red transition-colors">আমাদের পরিবার</button>
+          <span className="text-gray-600">·</span>
+          <button onClick={() => onNavigate('/contact')} className="hover:text-sami-red transition-colors">যোগাযোগ</button>
+          <span className="text-gray-600">·</span>
+          <button onClick={() => onNavigate('/privacy')} className="hover:text-sami-red transition-colors">গোপনীয়তা নীতি</button>
+          <span className="text-gray-600">·</span>
+          <button onClick={() => onNavigate('/terms')} className="hover:text-sami-red transition-colors">শর্তাবলী</button>
+        </div>
+
+        {/* Contact & Social Row */}
+        <div className="flex items-center justify-center gap-4 text-[11px] text-gray-400 font-medium">
+          <span className="flex items-center gap-1">
+            <MapPin size={12} className="text-sami-red" />
+            জামালপুর
+          </span>
+          <span className="text-gray-700">·</span>
+          <span className="flex items-center gap-1 font-mono tabular-nums">
+            <Phone size={12} className="text-sami-red" />
+            01912618994
+          </span>
+        </div>
+
+        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
+          <span>© {currentYear} সামি টেলিভিশন</span>
+          <button
+            onClick={() => {
+              sessionStorage.setItem('sami_login_mode', 'admin');
+              onNavigate('/admin');
+            }}
+            className="text-gray-400 hover:text-white flex items-center gap-1"
+          >
+            <Lock size={11} />
+            <span>অ্যাডমিন</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Full Desktop Footer (md and up) */}
+      <div className="hidden md:block pt-8 pb-4 container mx-auto px-4 sm:px-6 lg:px-8 max-w-[1650px]">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-3 text-center md:text-left">
@@ -37,12 +90,11 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
             </div>
           </div>
 
-          {/* Nav Links & Details - 5 Column Grid for Desktop */}
+          {/* Nav Links & Details - 4 Column Grid for Desktop */}
           <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center md:text-left">
             {/* Col 2: Important Links */}
             <div>
-              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5 justify-center md:justify-start">
-                <span className="w-1 h-3.5 bg-sami-red rounded-full"></span>
+              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3">
                 গুরুত্বপূর্ণ লিঙ্ক
               </h4>
               <ul className="space-y-1.5">
@@ -66,8 +118,7 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
 
             {/* Col 3: Categories */}
             <div>
-              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5 justify-center md:justify-start">
-                <span className="w-1 h-3.5 bg-sami-red rounded-full"></span>
+              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3">
                 বিভাগসমূহ
               </h4>
               <ul className="grid grid-cols-2 gap-x-1 gap-y-1.5 text-center md:text-left">
@@ -86,8 +137,7 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
 
             {/* Col 4: Contact */}
             <div>
-              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5 justify-center md:justify-start">
-                <span className="w-1 h-3.5 bg-sami-red rounded-full"></span>
+              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3">
                 যোগাযোগ
               </h4>
               <ul className="space-y-2 text-gray-400 inline-block md:block text-left text-xs sm:text-[13px]">
@@ -97,7 +147,7 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone size={13} className="text-sami-red shrink-0" />
-                  <span className="font-mono font-bold">01912618994</span>
+                  <span className="font-mono font-bold tabular-nums">01912618994</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Mail size={13} className="text-sami-red shrink-0" />
@@ -108,8 +158,7 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
 
             {/* Col 5: Services & Apps */}
             <div>
-              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3 flex items-center gap-1.5 justify-center md:justify-start">
-                <span className="w-1 h-3.5 bg-sami-red rounded-full"></span>
+              <h4 className="text-white font-extrabold text-xs uppercase tracking-wider mb-3">
                 সেবা ও পোর্টাল
               </h4>
               <ul className="space-y-1.5 mb-3 text-gray-400">
@@ -139,7 +188,6 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
                 </li>
               </ul>
 
-              {/* Micro Badges for Official Apps */}
               <div className="space-y-1.5 pt-1 border-t border-white/5">
                 <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block">সামী টিভি অ্যাপস</span>
                 <div className="flex flex-wrap justify-center md:justify-start gap-1.5">
@@ -163,12 +211,12 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
           </div>
         </div>
 
-        {/* Bottom Bar: Ultra Slim */}
+        {/* Bottom Bar */}
         <div className="pt-3.5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] text-gray-500 font-bold">
           <p>© {currentYear} সামি টেলিভিশন। সর্বস্বত্ব সংরক্ষিত।</p>
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <p className="font-sans">DEVELOPED BY <a href="https://mahmudulhasansami12.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-red-500 transition-colors cursor-pointer">Emran Hasan Sami</a></p>
-            <span className="text-gray-700">|</span>
+            <span className="text-gray-700">·</span>
             <button 
               onClick={() => {
                 sessionStorage.setItem('sami_login_mode', 'admin');

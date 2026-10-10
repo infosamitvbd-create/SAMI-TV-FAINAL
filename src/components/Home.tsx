@@ -4,19 +4,28 @@ import { Sidebar } from './Sidebar';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Clock, X, Image as ImageIcon, Layout, Sparkles, Moon, ArrowRight } from 'lucide-react';
+import { X, ChevronRight, ChevronsRight, Calendar } from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
   onNewsClick: (news: any) => void;
 }
 
+const categorySections = [
+  { title: 'জাতীয়', slug: 'জাতীয়', keywords: ['জাতীয়', 'জাতীয়', 'National'] },
+  { title: 'রাজনীতি', slug: 'রাজনীতি', keywords: ['রাজনীতি', 'Politics'] },
+  { title: 'সারা দেশ', slug: 'সারা দেশ', keywords: ['সারাদেশ', 'সারা দেশ', 'জেলা খবর'] },
+  { title: 'জামালপুর', slug: 'জামালপুর', keywords: ['জামালপুর', 'Jamalpur'] },
+  { title: 'সরিষাবাড়ী', slug: 'সরিষাবাড়ী', keywords: ['সরিষাবাড়ী', 'Sarishabari'] },
+  { title: 'আন্তর্জাতিক', slug: 'আন্তর্জাতিক', keywords: ['আন্তর্জাতিক', 'International'] },
+  { title: 'খেলাধুলা', slug: 'খেলাধুলা', keywords: ['খেলাধুলা', 'খেলা', 'Sports'] },
+  { title: 'বিনোদন', slug: 'বিনোদন', keywords: ['বিনোদন', 'Entertainment'] },
+  { title: 'তথ্য-প্রযুক্তি', slug: 'তথ্যপ্রযুক্তি', keywords: ['তথ্যপ্রযুক্তি', 'তথ্য-প্রযুক্তি', 'Tech'] },
+];
+
 export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
   const [newsList, setNewsList] = useState<any[]>([]);
-  const [reporters, setReporters] = useState<any[]>([]);
-  const [mediaItems, setMediaItems] = useState<any[]>([]);
   const [popupAd, setPopupAd] = useState<any>(null);
-  const [contentAds, setContentAds] = useState<any[]>([]);
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
@@ -28,19 +37,6 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
       console.error("Firestore Error: ", error);
     });
 
-    // Reporters for Home
-    const qReporters = query(collection(db, 'reporters'), limit(6));
-    const unsubscribeReporters = onSnapshot(qReporters, (snapshot) => {
-      setReporters(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    // Media for Home
-    const qMedia = query(collection(db, 'media'), orderBy('createdAt', 'desc'), limit(4));
-    const unsubscribeMedia = onSnapshot(qMedia, (snapshot) => {
-      setMediaItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    // Popup Ad Subscription
     const qPopup = query(
       collection(db, 'ads'), 
       where('position', '==', 'popup'),
@@ -50,32 +46,16 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
     const unsubscribePopup = onSnapshot(qPopup, (snapshot) => {
       if (!snapshot.empty) {
         setPopupAd({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
-        // Show popup after 2 seconds
-        setTimeout(() => setShowPopup(true), 2000);
+        setTimeout(() => setShowPopup(true), 12000);
       }
-    });
-
-    // Content Ad Subscription
-    const qContent = query(
-      collection(db, 'ads'), 
-      where('position', '==', 'content'),
-      where('active', '==', true),
-      limit(1)
-    );
-    const unsubscribeContent = onSnapshot(qContent, (snapshot) => {
-      setContentAds(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => {
       unsubscribe();
-      unsubscribeReporters();
-      unsubscribeMedia();
       unsubscribePopup();
-      unsubscribeContent();
     };
   }, []);
 
-  // Helper to ensure exactly 7 items for any category section
   const getCategoryNews = (categoryKeywords: string[], count = 7) => {
     if (!newsList || newsList.length === 0) return [];
     
@@ -99,22 +79,22 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col lg:flex-row gap-8"
+      className="flex flex-col lg:flex-row gap-5 sm:gap-8"
     >
       <AnimatePresence>
         {showPopup && popupAd && (
           <div className="hidden lg:flex fixed inset-0 bg-black/70 backdrop-blur-sm z-[100] items-center justify-center p-4">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative max-w-lg w-full bg-white rounded-sm overflow-hidden shadow-2xl"
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              className="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl"
             >
               <button 
                 onClick={() => setShowPopup(false)}
-                className="absolute top-2 right-2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors z-10"
+                className="absolute top-2.5 right-2.5 w-8 h-8 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black transition-colors z-10 cursor-pointer"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
               <a 
                 href={popupAd.link || '#'} 
@@ -137,311 +117,136 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
         )}
       </AnimatePresence>
 
-      <div className="flex-grow flex flex-col gap-8">
+      <div className="flex-grow flex flex-col gap-5 sm:gap-8">
         <HeroSection onNewsClick={onNewsClick} onNavigate={onNavigate} />
-        
-        {/* Category: 'রাজনীতি' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">রাজনীতি</h2>
-            </div>
-            <button 
-              onClick={() => onNavigate('/category/রাজনীতি')}
-              className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group"
-            >
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['রাজনীতি', 'Politics']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Category: 'জাতীয়' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">জাতীয়</h2>
-            </div>
-            <button 
-              onClick={() => onNavigate('/category/জাতীয়')}
-              className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group"
-            >
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['জাতীয়', 'জাতীয়', 'National']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {categorySections.map((section) => {
+          const items = getCategoryNews(section.keywords);
+          if (items.length === 0) return null;
 
-        {/* Category: 'সারা দেশ' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">সারা দেশ</h2>
-            </div>
-            <button 
-              onClick={() => onNavigate('/category/সারা দেশ')}
-              className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group"
-            >
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['সারাদেশ', 'সারা দেশ', 'জেলা খবর']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
+          return (
+            <section key={section.slug}>
+              {/* MOBILE ONLY VIEW (Compact 3-column layout showing 3 news items) */}
+              <div className="sm:hidden bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                {/* Category Header Box */}
+                <div className="m-2 mb-0 px-3 py-1.5 bg-[#f8f9fa] border border-slate-200/80 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1 h-4 bg-[#990000] rounded-full shrink-0" />
+                    <h2 className="text-[15px] font-extrabold text-[#8b0000] leading-snug tracking-tight">
+                      {section.title}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => onNavigate(`/category/${section.slug}`)}
+                    className="flex items-center gap-1 text-[11.5px] font-bold text-[#8b0000] active:opacity-75 cursor-pointer"
+                  >
+                    <span>আরও দেখুন</span>
+                    <span className="flex items-center -space-x-1.5 text-[#8b0000]">
+                      <ChevronRight size={13} strokeWidth={2.8} />
+                      <ChevronRight size={13} strokeWidth={2.8} className="opacity-65" />
+                      <ChevronRight size={13} strokeWidth={2.8} className="opacity-35" />
+                    </span>
+                  </button>
                 </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Category: 'আন্তর্জাতিক' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">আন্তর্জাতিক</h2>
-            </div>
-            <button 
-              onClick={() => onNavigate('/category/আন্তর্জাতিক')}
-              className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group"
-            >
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['আন্তর্জাতিক', 'International']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Categories: 'খেলাধুলা' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">খেলাধুলা</h2>
-            </div>
-            <button onClick={() => onNavigate('/category/খেলাধুলা')} className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group">
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['খেলাধুলা', 'খেলা', 'Sports']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                {/* 3-Column Compact Mobile News Card Grid (3 News Items) */}
+                <div className="p-2.5 grid grid-cols-3 gap-2">
+                  {items.slice(0, 3).map((news) => (
+                    <div
+                      key={news.id}
+                      onClick={() => onNewsClick(news)}
+                      className="flex flex-col h-full group cursor-pointer min-w-0"
+                    >
+                      {/* Thumbnail Image */}
+                      <div className="w-full aspect-[16/10] rounded-lg overflow-hidden bg-slate-100 mb-1.5 border border-slate-100">
+                        <img
+                          src={news.imageUrl}
+                          alt={news.title}
+                          className="w-full h-full object-cover group-active:scale-105 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
 
-        {/* Categories: 'বিনোদন' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">বিনোদন</h2>
-            </div>
-            <button onClick={() => onNavigate('/category/বিনোদন')} className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group">
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['বিনোদন', 'Entertainment']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-colors line-clamp-2 duration-300">
-                    {news.title}
-                  </h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                      {/* Headline */}
+                      <h3 className="font-extrabold text-[11px] leading-[1.3] text-slate-900 group-hover:text-sami-red transition-colors line-clamp-2 mb-1">
+                        {news.title}
+                      </h3>
 
-        {/* Combined Category: 'জামালপুর' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">জামালপুর</h2>
-            </div>
-            <button onClick={() => onNavigate('/category/জামালপুর')} className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group">
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['জামালপুর', 'Jamalpur']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-all line-clamp-2 duration-300">{news.title}</h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                      {/* Short Excerpt */}
+                      <p className="text-[9.5px] leading-[1.35] text-slate-500 line-clamp-2 mb-1.5 font-normal">
+                        {news.content
+                          ? news.content.replace(/<[^>]*>/g, '').slice(0, 75) + '...'
+                          : 'বিস্তারিত সংবাদ পড়ুন...'}
+                      </p>
 
-        {/* Category: 'তথ্য-প্রযুক্তি' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">তথ্য-প্রযুক্তি</h2>
-            </div>
-            <button onClick={() => onNavigate('/category/তথ্যপ্রযুক্তি')} className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group">
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['তথ্যপ্রযুক্তি', 'তথ্য-প্রযুক্তি', 'Tech']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-all line-clamp-2 duration-300">{news.title}</h3>
-                </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+                      {/* Divider, Date & Read More */}
+                      <div className="border-t border-slate-200/80 pt-1.5 mt-auto flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1 text-[8.5px] text-slate-500 font-medium whitespace-nowrap truncate">
+                          <Calendar size={9} className="text-slate-500 shrink-0" />
+                          <span className="truncate">
+                            {new Date(
+                              news.createdAt?.seconds * 1000 || Date.now()
+                            ).toLocaleDateString('bn-BD', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-0.5 text-[10px] font-extrabold text-[#990000]">
+                          <span>বিস্তারিত</span>
+                          <ChevronsRight size={11} className="text-red-300 stroke-[2.5]" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Category: 'সরিষাবাড়ী' - 5 Small grid */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between border-b border-gray-200 pb-2.5 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="h-5 w-1 bg-sami-red rounded-full"></span>
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight font-sans">সরিষাবাড়ী</h2>
-            </div>
-            <button onClick={() => onNavigate('/category/সরিষাবাড়ী')} className="text-xs font-bold text-sami-red hover:text-red-700 transition-colors flex items-center gap-0.5 group">
-              আরও খবর <span className="group-hover:translate-x-0.5 transition-transform">»</span>
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
-            {getCategoryNews(['সরিষাবাড়ী', 'Sarishabari']).map((news, idx) => (
-              <div 
-                key={news.id}
-                onClick={() => onNewsClick(news)}
-                className={`bg-white group cursor-pointer rounded-xl border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.015)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.045)] p-2 sm:p-2.5 transition-all duration-300 flex flex-row lg:flex-col items-center lg:items-stretch justify-between gap-2.5 h-full ${
-                  idx >= 6 ? 'hidden lg:flex' : ''
-                }`}
-              >
-                <div className="flex-1 min-w-0 order-1 lg:order-2">
-                  <h3 className="font-bold text-[11px] sm:text-xs leading-snug text-gray-800 group-hover:text-sami-red transition-all line-clamp-2 duration-300">{news.title}</h3>
+              {/* DESKTOP VIEW (Single Row of 6 Compact News Items) */}
+              <div className="hidden sm:block bg-white rounded-xl border border-slate-200/90 shadow-2xs p-3.5 lg:p-4">
+                <div className="flex items-center justify-between border-b border-slate-200/90 pb-2.5 mb-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-5 bg-[#990000] rounded-full shrink-0" />
+                    <h2 className="text-base lg:text-lg font-black text-slate-900 tracking-tight font-sans">
+                      {section.title}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => onNavigate(`/category/${section.slug}`)}
+                    className="text-xs lg:text-sm font-bold text-[#8b0000] hover:text-red-700 transition-colors flex items-center gap-1 group cursor-pointer"
+                  >
+                    <span>আরও দেখুন</span>
+                    <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+                  </button>
                 </div>
-                <div className="w-20 h-14 sm:w-24 sm:h-16 lg:w-full lg:h-auto lg:aspect-video shrink-0 overflow-hidden rounded-lg border border-gray-50 bg-slate-100 order-2 lg:order-1 mb-0 lg:mb-2">
-                  <img src={news.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
+
+                {/* Single Serial Row: 6 News Items */}
+                <div className="grid grid-cols-6 divide-x divide-slate-200/90">
+                  {items.slice(0, 6).map((news) => (
+                    <div
+                      key={news.id}
+                      onClick={() => onNewsClick(news)}
+                      className="group cursor-pointer flex flex-col min-w-0 px-2.5 lg:px-3 first:pl-0 last:pr-0"
+                    >
+                      <div className="w-full aspect-[16/10] overflow-hidden rounded-md bg-slate-100 border border-slate-100 mb-2">
+                        <img
+                          src={news.imageUrl}
+                          alt={news.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                      <h3 className="font-bold text-[11.5px] lg:text-[12.5px] leading-[1.35] text-slate-900 group-hover:text-sami-red transition-colors line-clamp-3">
+                        {news.title}
+                      </h3>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </section>
+          );
+        })}
       </div>
 
       <aside className="w-full lg:w-[320px] shrink-0 hidden lg:block">
