@@ -2,11 +2,13 @@
   publish = "dist"
   command = "npm run build"
 
-# SAMI TV Live Streaming HLS Reverse Proxy for Netlify
-# Solves browser Mixed Content (HTTP-in-HTTPS) and CORS issues on Netlify
+[functions]
+  directory = "netlify/functions"
+
+# Route SAMI TV live stream requests through the Netlify HTTPS reverse proxy function
 [[redirects]]
   from = "/api/stream/*"
-  to = "http://103.238.115.159:8080/samitv/:splat"
+  to = "/.netlify/functions/stream"
   status = 200
   force = true
 

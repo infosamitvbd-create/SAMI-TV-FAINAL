@@ -11,7 +11,7 @@ interface LiveTVPlayerProps {
   onToggleTheater?: (val: boolean) => void;
 }
 
-export const DEFAULT_STREAM_URL = "http://103.238.115.159:8080/samitv/index.m3u8";
+export const DEFAULT_STREAM_URL = ((import.meta as any).env?.VITE_STREAM_URL as string) || "http://103.238.115.159:8080/samitv/index.m3u8";
 
 export const getPlayableUrl = (url: string): string => {
   if (!url) return '';
@@ -33,24 +33,17 @@ export const getPlayableUrl = (url: string): string => {
   return url;
 };
 
-const getInitialStreamUrl = (): string => {
+// Immediately purge any stale or test stream URLs stored in previous sessions
+if (typeof window !== 'undefined') {
   try {
-    const saved = localStorage.getItem('sami_custom_stream_url');
-    if (saved) {
-      if (saved.includes('tvhunter') || saved.includes('zibo1') || saved.includes('localhost') || saved.includes('103.238.115.159:8080/samitv/')) {
-        localStorage.removeItem('sami_custom_stream_url');
-        return DEFAULT_STREAM_URL;
-      }
-      return saved;
-    }
+    localStorage.removeItem('sami_custom_stream_url');
   } catch {
-    // localStorage might not be accessible
+    // ignore
   }
-  return DEFAULT_STREAM_URL;
-};
+}
 
 export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onToggleTheater }) => {
-  const [streamUrl] = useState<string>(getInitialStreamUrl);
+  const [streamUrl] = useState<string>(DEFAULT_STREAM_URL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -61,8 +54,6 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
   const [availableQualities, setAvailableQualities] = useState<string[]>(['Auto', '720p HD']);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [currentResolution, setCurrentResolution] = useState<string>('720p HD');
-  const [isAnamorphicOr169, setIsAnamorphicOr169] = useState<boolean>(true);
-  const [aspectMode, setAspectMode] = useState<'fit' | 'contain' | 'fill'>('fit');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -71,12 +62,8 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
   const checkVideoDimensions = (video: HTMLVideoElement) => {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    if (vw && vh) {
-      const ratio = vw / vh;
-      // 1280x1080 is broadcast anamorphic 16:9 (DVCPRO HD / HDCAM standard raster scaled to 16:9 display).
-      // Standard 16:9 square pixels is ~1.777 (1280x720, 1920x1080).
-      const is169 = Math.abs(ratio - (16 / 9)) < 0.08 || (vw === 1280 && vh === 1080);
-      setIsAnamorphicOr169(is169);
+    if (vw && vh && quality === 'Auto') {
+      setCurrentResolution(`${vh}p HD`);
     }
   };
 
@@ -471,13 +458,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
           style={{
             width: '100%',
             height: '100%',
-            objectFit: isTheaterMode 
-              ? 'contain' 
-              : aspectMode === 'contain'
-              ? 'contain'
-              : aspectMode === 'fill'
-              ? 'fill'
-              : (isAnamorphicOr169 ? 'fill' : 'contain'),
+            objectFit: 'contain',
           }}
           playsInline
           muted={muted}
@@ -564,21 +545,6 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                         exit={{ opacity: 0, scale: 0.9, y: -10 }}
                         className="absolute bottom-full right-0 mb-3 bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[140px] premium-blur"
                       >
-                         <div className="px-4 py-2 border-b border-white/5 bg-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">Aspect Ratio</div>
-                         <div className="p-1.5 grid grid-cols-2 gap-1 border-b border-white/5">
-                           <button 
-                            onClick={() => { setAspectMode('fit'); setShowQualityMenu(false); }}
-                            className={`px-2 py-1.5 rounded-lg text-[9.5px] font-bold transition-colors text-center ${aspectMode === 'fit' ? 'bg-sami-red text-white' : 'text-gray-400 hover:bg-white/5'}`}
-                           >
-                             16:9 Fit
-                           </button>
-                           <button 
-                            onClick={() => { setAspectMode('contain'); setShowQualityMenu(false); }}
-                            className={`px-2 py-1.5 rounded-lg text-[9.5px] font-bold transition-colors text-center ${aspectMode === 'contain' ? 'bg-sami-red text-white' : 'text-gray-400 hover:bg-white/5'}`}
-                           >
-                             Original
-                           </button>
-                         </div>
                          <div className="px-4 py-2 border-b border-white/5 bg-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">Quality Settings</div>
                          {availableQualities.map((q) => (
                            <button 
