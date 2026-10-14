@@ -115,7 +115,7 @@ export const LiveTV: React.FC<LiveTVProps> = ({ onNewsClick, onNavigate }) => {
             {/* Header Status Bar */}
             {!isTheaterMode && (
               <>
-                {/* MOBILE ONLY: Sleek Broadcast Control Room Status Header */}
+                {/* MOBILE ONLY: Sleek Broadcast Header */}
                 <div className="sm:hidden bg-gradient-to-r from-[#0a0a0a] via-[#141414] to-[#0a0a0a] text-white px-3 py-2 flex items-center justify-between gap-2 border-b border-white/10">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="relative shrink-0">
@@ -124,29 +124,13 @@ export const LiveTV: React.FC<LiveTVProps> = ({ onNewsClick, onNavigate }) => {
                       </div>
                       <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-[#0a0a0a]"></div>
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h1 className="text-[11.5px] font-black uppercase tracking-tight leading-none font-brand">
-                          SAMI TV <span className="text-sami-red">LIVE</span>
-                        </h1>
-                        <span className="px-1 py-0.2 bg-sami-red/20 border border-sami-red/40 rounded text-[7px] font-black text-sami-red uppercase">
-                          4K UHD
-                        </span>
-                      </div>
-                      <p className="text-[8.5px] font-bold text-emerald-400 leading-none mt-1 truncate">
-                        ২৪/৭ সরাসরি সম্প্রচার • স্টুডিও জামালপুর
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <div className="flex items-center gap-1 bg-white/8 border border-white/10 px-1.5 py-0.5 rounded-md text-slate-200 text-[9px] font-bold">
-                      <Eye size={10} className="text-sami-red" />
-                      <span>১.৪ হাজার</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded-md text-emerald-400 text-[9px] font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      <span>ON AIR</span>
+                    <div className="flex items-center gap-1.5">
+                      <h1 className="text-[12px] font-black uppercase tracking-tight leading-none font-brand">
+                        SAMI TV <span className="text-sami-red">LIVE</span>
+                      </h1>
+                      <span className="px-1 py-0.2 bg-sami-red/20 border border-sami-red/40 rounded text-[7px] font-black text-sami-red uppercase">
+                        4K UHD
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -184,32 +168,13 @@ export const LiveTV: React.FC<LiveTVProps> = ({ onNewsClick, onNavigate }) => {
             )}
             
             {/* Live TV Video Player Component Container */}
-            <div className={`p-0 bg-black relative group ${isTheaterMode ? '' : 'aspect-video'}`}>
+            <div className={`p-0 bg-black relative group w-full ${isTheaterMode ? '' : 'aspect-video'}`}>
               <LiveTVPlayer isTheaterMode={isTheaterMode} onToggleTheater={setIsTheaterMode} />
             </div>
 
             {/* Title, Share & Meta Details Bar */}
             {/* MOBILE ONLY: Professional Broadcast Now-Playing & Meta Strip */}
             <div className="sm:hidden bg-white border-t border-slate-100">
-              {/* Now Playing Sub-bar */}
-              <div className="bg-slate-900 text-white px-3 py-1.5 flex items-center justify-between gap-2 border-b border-slate-800">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="px-1.5 py-0.5 bg-sami-red text-white text-[8px] font-black rounded uppercase tracking-wider flex items-center gap-1 shrink-0">
-                    <span className="w-1 h-1 bg-white rounded-full animate-ping"></span>
-                    এখন চলছে
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-200 truncate">
-                    {displaySchedule.find((p) => p.active)?.title || 'প্রাইম টাইম সংবাদ বুলেটিন ও বিশেষ প্রতিবেদন'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setMobileConsoleTab('schedule')}
-                  className="text-[9px] font-bold text-emerald-400 hover:underline shrink-0 flex items-center gap-0.5 cursor-pointer"
-                >
-                  <span>সূচী</span>
-                  <ChevronRight size={10} />
-                </button>
-              </div>
 
               <div className="p-2.5">
                 <div className="flex items-start justify-between gap-2">

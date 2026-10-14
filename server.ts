@@ -11,6 +11,32 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // SAMI TV Live Stream Proxy (prevents HTTPS mixed-content blocking for HTTP HLS stream)
+  app.get("/api/stream/*", async (req, res) => {
+    try {
+      const subPath = (req.params as any)[0] || "index.m3u8";
+      const targetUrl = `http://103.238.115.159:8080/samitv/${subPath}`;
+      
+      const upstream = await fetch(targetUrl);
+      if (!upstream.ok) {
+        return res.status(upstream.status).send(`Stream upstream error: ${upstream.statusText}`);
+      }
+
+      const contentType = upstream.headers.get("content-type") || 
+        (subPath.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/MP2T");
+      
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Cache-Control", subPath.endsWith(".m3u8") ? "no-cache, no-store, must-revalidate" : "public, max-age=3600");
+
+      const arrayBuffer = await upstream.arrayBuffer();
+      res.send(Buffer.from(arrayBuffer));
+    } catch (err: any) {
+      console.error("Stream proxy error:", err);
+      res.status(502).send("Stream proxy gateway error");
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

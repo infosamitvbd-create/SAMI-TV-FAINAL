@@ -19,7 +19,6 @@ import {
   ArrowUp,
   Share2,
   Check,
-  Type,
   Flame,
   MonitorPlay,
 } from 'lucide-react';
@@ -54,7 +53,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onNavigate, cu
   const [newsItems, setNewsItems] = useState<any[]>([]);
   const [latestTab, setLatestTab] = useState<'recent' | 'popular'>('recent');
   const [searchQuery, setSearchQuery] = useState('');
-  const [fontScale, setFontScale] = useState<'normal' | 'medium' | 'large'>('normal');
   const [copiedLink, setCopiedLink] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -76,17 +74,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onNavigate, cu
         .catch(() => {});
     }
   }, [activeSheet, newsItems.length]);
-
-  const handleFontScaleChange = (scale: 'normal' | 'medium' | 'large') => {
-    setFontScale(scale);
-    if (scale === 'normal') {
-      document.documentElement.style.fontSize = '16px';
-    } else if (scale === 'medium') {
-      document.documentElement.style.fontSize = '17.5px';
-    } else {
-      document.documentElement.style.fontSize = '19px';
-    }
-  };
 
   const handleSharePortal = async () => {
     const shareUrl = window.location.href;
@@ -384,41 +371,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onNavigate, cu
                   </div>
 
                   <div className="overflow-y-auto p-4 space-y-4">
-                    {/* Reader Font Size & Share Bar */}
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-sami-red shrink-0">
-                          <Type size={16} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800">ফন্ট সাইজ</p>
-                          <p className="text-[10px] font-medium text-slate-500">পড়ার সুবিধা অনুযায়ী</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200">
-                        {[
-                          { id: 'normal', label: 'A' },
-                          { id: 'medium', label: 'A+' },
-                          { id: 'large', label: 'A++' },
-                        ].map((opt) => (
-                          <button
-                            key={opt.id}
-                            onClick={() =>
-                              handleFontScaleChange(opt.id as 'normal' | 'medium' | 'large')
-                            }
-                            className={`px-2.5 py-1 rounded-lg text-xs font-black transition-colors cursor-pointer ${
-                              fontScale === opt.id
-                                ? 'bg-sami-red text-white'
-                                : 'text-slate-600 hover:bg-slate-100'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Quick Portal Feature Grid */}
                     <div>
                       <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">

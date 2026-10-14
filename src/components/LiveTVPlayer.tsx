@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactPlayer from 'react-player';
-import { Radio, Loader2, AlertCircle, Maximize, RefreshCw, Volume2, VolumeX, Minimize, Play, Pause, Settings, Info, Layout, Link2, Check, ExternalLink, ShieldAlert, X } from 'lucide-react';
+import Hls from 'hls.js';
+import { 
+  Radio, Loader2, Maximize, RefreshCw, Volume2, VolumeX, 
+  Minimize, Play, Pause, Settings, Layout 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface LiveTVPlayerProps {
@@ -8,46 +11,65 @@ interface LiveTVPlayerProps {
   onToggleTheater?: (val: boolean) => void;
 }
 
-const DEFAULT_STREAM_URL = "https://zibo1.tvhunter.top/SAMI_TV/index.m3u8";
-const SAMPLE_TEST_STREAM = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+export const DEFAULT_STREAM_URL = "http://103.238.115.159:8080/samitv/index.m3u8";
+
+export const getPlayableUrl = (url: string): string => {
+  // If the browser is running over HTTPS and target stream is HTTP on official IP,
+  // route through the local proxy to prevent browser Mixed Content (HTTP-in-HTTPS) block.
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    if (url.startsWith('http://103.238.115.159:8080/samitv/')) {
+      const sub = url.replace('http://103.238.115.159:8080/samitv/', '');
+      return `/api/stream/${sub || 'index.m3u8'}`;
+    }
+  }
+  return url;
+};
+
+const getInitialStreamUrl = (): string => {
+  try {
+    const saved = localStorage.getItem('sami_custom_stream_url');
+    if (saved) {
+      if (saved.includes('tvhunter') || saved.includes('zibo1')) {
+        localStorage.removeItem('sami_custom_stream_url');
+        return DEFAULT_STREAM_URL;
+      }
+      return saved;
+    }
+  } catch {
+    // localStorage might not be accessible
+  }
+  return DEFAULT_STREAM_URL;
+};
 
 export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onToggleTheater }) => {
-  const [streamUrl, setStreamUrl] = useState<string>(() => {
-    return localStorage.getItem('sami_custom_stream_url') || DEFAULT_STREAM_URL;
-  });
+  const [streamUrl] = useState<string>(getInitialStreamUrl);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [quality, setQuality] = useState('Auto');
+  const [availableQualities, setAvailableQualities] = useState<string[]>(['Auto', '720p HD']);
   const [showQualityMenu, setShowQualityMenu] = useState(false);
-  const [showUrlModal, setShowUrlModal] = useState(false);
-  const [inputUrl, setInputUrl] = useState(streamUrl);
-  const playerRef = useRef<any>(null);
+  const [currentResolution, setCurrentResolution] = useState<string>('720p HD');
+  const [isAnamorphicOr169, setIsAnamorphicOr169] = useState<boolean>(true);
+  const [aspectMode, setAspectMode] = useState<'fit' | 'contain' | 'fill'>('fit');
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const Player = ReactPlayer as any;
-
-  // Clean up safely when unmounting so play() promise is never interrupted
-  useEffect(() => {
-    return () => {
-      if (connectTimeoutRef.current) {
-        clearTimeout(connectTimeoutRef.current);
-      }
-      try {
-        if (playerRef.current) {
-          const internal = playerRef.current.getInternalPlayer();
-          if (internal && typeof internal.pause === 'function') {
-            internal.pause();
-          }
-        }
-      } catch {
-        // Safe cleanup
-      }
-    };
-  }, []);
+  const checkVideoDimensions = (video: HTMLVideoElement) => {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    if (vw && vh) {
+      const ratio = vw / vh;
+      // 1280x1080 is broadcast anamorphic 16:9 (DVCPRO HD / HDCAM standard raster scaled to 16:9 display).
+      // Standard 16:9 square pixels is ~1.777 (1280x720, 1920x1080).
+      const is169 = Math.abs(ratio - (16 / 9)) < 0.08 || (vw === 1280 && vh === 1080);
+      setIsAnamorphicOr169(is169);
+    }
+  };
 
   // Connection timeout watchdog
   useEffect(() => {
@@ -58,9 +80,8 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
           setError(true);
           setLoading(false);
           setPlaying(false);
-          setErrorMessage('স্ট্রিমিং সার্ভার (tvhunter.top) থেকে ক্লাউডফ্লেয়ার (Cloudflare 403 Forbidden) বাধা পাওয়া গেছে। সার্ভারের সিকিউরিটি রুলসের কারণে সরাসরি ব্রাউজারে স্ট্রিমটি প্লে হচ্ছে না।');
         }
-      }, 9000);
+      }, 10000);
     } else {
       if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
     }
@@ -68,6 +89,21 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
     };
   }, [playing, loading]);
+
+  // Auto-reconnect when offline: periodically polls so that when broadcast resumes, live video starts automatically
+  useEffect(() => {
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    if (error && !loading) {
+      reconnectTimer = setTimeout(() => {
+        setError(false);
+        setLoading(true);
+        setPlaying(true);
+      }, 7000);
+    }
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [error, loading]);
 
   // Auto-hide controls
   useEffect(() => {
@@ -77,6 +113,125 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     }
     return () => clearTimeout(timeout);
   }, [playing, loading, error, showControls]);
+
+  // Sync muted state
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = muted;
+    }
+  }, [muted]);
+
+  // Main HLS.js and Video stream setup
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Clean up previous Hls instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    if (!playing) {
+      try {
+        video.pause();
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
+    setLoading(true);
+    setError(false);
+
+    const effectiveUrl = getPlayableUrl(streamUrl);
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 60,
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+        manifestLoadingTimeOut: 10000,
+        manifestLoadingMaxRetry: 3,
+        levelLoadingTimeOut: 10000,
+        fragLoadingTimeOut: 12000,
+      });
+
+      hlsRef.current = hls;
+
+      hls.loadSource(effectiveUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+        setLoading(false);
+        setError(false);
+        if (data.levels && data.levels.length > 0) {
+          const lvls = data.levels
+            .map(l => (l.height ? `${l.height}p` : ''))
+            .filter(Boolean);
+          if (lvls.length > 0) {
+            setAvailableQualities(['Auto', ...Array.from(new Set(lvls))]);
+          }
+        }
+        video.play().catch((err) => {
+          console.log('Autoplay deferred or muted required:', err);
+        });
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
+        if (hls.levels && hls.levels[data.level]) {
+          const lvl = hls.levels[data.level];
+          if (lvl.height) {
+            setCurrentResolution(`${lvl.height}p`);
+          }
+        }
+      });
+
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        console.warn('HLS.js player event notice:', data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              hls.destroy();
+              hlsRef.current = null;
+              setError(true);
+              setLoading(false);
+              setPlaying(false);
+              break;
+          }
+        }
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS for Safari (iOS & macOS)
+      video.src = effectiveUrl;
+      const onLoadedMetadata = () => {
+        setLoading(false);
+        setError(false);
+        video.play().catch(() => {});
+      };
+      video.addEventListener('loadedmetadata', onLoadedMetadata);
+      return () => {
+        video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      };
+    } else {
+      video.src = effectiveUrl;
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [streamUrl, playing]);
 
   const toggleFullscreen = () => {
     const el = document.getElementById('sami-player-root');
@@ -95,35 +250,31 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     setPlaying(true);
   };
 
-  const handleSaveCustomUrl = (newUrl: string) => {
-    const trimmed = newUrl.trim();
-    if (!trimmed) return;
-    setStreamUrl(trimmed);
-    localStorage.setItem('sami_custom_stream_url', trimmed);
-    setShowUrlModal(false);
-    setError(false);
-    setLoading(true);
-    setPlaying(true);
+  const handleTogglePlay = () => {
+    if (playing) {
+      setPlaying(false);
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+    } else {
+      handleStartPlay();
+    }
   };
 
-  const handleLoadTestStream = () => {
-    setStreamUrl(SAMPLE_TEST_STREAM);
-    setInputUrl(SAMPLE_TEST_STREAM);
-    localStorage.setItem('sami_custom_stream_url', SAMPLE_TEST_STREAM);
-    setError(false);
-    setLoading(true);
-    setPlaying(true);
-    setShowUrlModal(false);
-  };
+  const handleSelectQuality = (selected: string) => {
+    setQuality(selected);
+    setShowQualityMenu(false);
+    if (!hlsRef.current) return;
 
-  const handleResetToDefault = () => {
-    setStreamUrl(DEFAULT_STREAM_URL);
-    setInputUrl(DEFAULT_STREAM_URL);
-    localStorage.removeItem('sami_custom_stream_url');
-    setError(false);
-    setLoading(true);
-    setPlaying(true);
-    setShowUrlModal(false);
+    if (selected === 'Auto') {
+      hlsRef.current.currentLevel = -1;
+    } else {
+      const targetHeight = parseInt(selected, 10);
+      const index = hlsRef.current.levels.findIndex(l => l.height === targetHeight);
+      if (index !== -1) {
+        hlsRef.current.currentLevel = index;
+      }
+    }
   };
 
   return (
@@ -131,7 +282,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       id="sami-player-root"
       onMouseMove={() => setShowControls(true)}
       onMouseLeave={() => playing && setShowControls(false)}
-      className={`bg-black overflow-hidden relative transition-all duration-500 shadow-2xl border border-white/5 group ring-1 ring-white/10 ${isTheaterMode ? 'rounded-none' : 'rounded-sm aspect-video'}`}
+      className={`bg-black overflow-hidden relative transition-all duration-500 shadow-2xl border border-white/5 group ring-1 ring-white/10 w-full ${isTheaterMode ? 'rounded-none h-[80vh]' : 'rounded-sm aspect-video h-full'}`}
       style={isTheaterMode ? { height: '80vh' } : {}}
     >
       {/* Background Poster / Brand Layer */}
@@ -165,18 +316,11 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                   <h4 className="text-white font-black text-[11px] sm:text-xs md:text-sm uppercase tracking-wider drop-shadow-md truncate font-brand">SAMI TV <span className="hidden xs:inline">ULTRA HD</span></h4>
                   <span className="bg-yellow-500 text-black text-[7.5px] sm:text-[8px] font-black px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-sm tracking-tighter shadow-lg shadow-yellow-500/20 shrink-0">4K</span>
                 </div>
-                <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest hidden sm:block">Official 4K Broadcast Stream</p>
+                <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest hidden sm:block">Official Broadcast Stream</p>
               </div>
             </div>
             
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <button 
-                onClick={() => { setShowUrlModal(true); setInputUrl(streamUrl); }}
-                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white/90 hover:text-white rounded-full transition-all backdrop-blur-md border border-white/10"
-                title="স্ট্রিম লিংক কনফিগারেশন / পরিবর্তন"
-              >
-                <Link2 size={13} />
-              </button>
               <button 
                 onClick={() => { setError(false); setLoading(true); setPlaying(true); }}
                 className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-all backdrop-blur-md border border-white/10"
@@ -214,7 +358,6 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                     <div className="absolute inset-0 blur-2xl bg-white/10 rounded-full animate-pulse"></div>
                   </div>
                   <p className="text-white/80 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mt-1">Connecting to Stream...</p>
-                  <p className="text-white/40 text-[9px] mt-1 font-mono max-w-xs truncate">{streamUrl}</p>
                </div>
             ) : (
               <button 
@@ -234,110 +377,76 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         )}
       </AnimatePresence>
 
-      {/* Error State with Technical Diagnostics */}
+      {/* Offline / Error State (No Raw URL, No Server IP, Clean Message) */}
       <AnimatePresence>
         {error && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-950/95 p-2.5 sm:p-6 text-center backdrop-blur-md overflow-y-auto"
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gray-950/95 p-4 sm:p-6 text-center backdrop-blur-md overflow-hidden"
           >
-            <div className="w-8 h-8 sm:w-16 sm:h-16 bg-red-600/10 border border-red-500/20 rounded-xl sm:rounded-2xl flex items-center justify-center mb-1.5 sm:mb-4 ring-2 sm:ring-4 ring-red-600/5 shrink-0">
-              <ShieldAlert className="w-4 h-4 sm:w-8 sm:h-8 text-red-500" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-600/10 border border-red-500/20 rounded-2xl flex items-center justify-center mb-3 sm:mb-4 ring-4 ring-red-600/5 shrink-0">
+              <Radio className="w-6 h-6 sm:w-8 sm:h-8 text-red-500 animate-pulse" />
             </div>
 
-            <h3 className="text-white font-bold text-xs sm:text-xl mb-1 sm:mb-1.5 tracking-tight">
-              স্ট্রিমিং সংযোগ বিভ্রাট (Cloudflare 403)
+            <h3 className="text-white font-bold text-sm sm:text-lg mb-1.5 sm:mb-2 tracking-tight">
+              SAMI TV — সম্প্রচার সাময়িকভাবে বন্ধ রয়েছে
             </h3>
             
-            <p className="text-gray-300 text-[10px] sm:text-sm max-w-md leading-snug sm:leading-relaxed font-normal mb-2 sm:mb-3 line-clamp-2 sm:line-clamp-none">
-              {errorMessage || 'সার্ভার (tvhunter.top) থেকে সরাসরি ব্রাউজার সংযোগ ব্লক করা হচ্ছে (Cloudflare 403)।'}
+            <p className="text-gray-400 text-xs sm:text-sm max-w-md leading-relaxed font-normal mb-4">
+              অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন। সম্প্রচার পুনরায় শুরু হওয়ামাত্র স্বয়ংক্রিয়ভাবে লাইভ সম্প্রচার চালু হবে।
             </p>
 
-            {/* Diagnostics Card (Desktop/Tablet) */}
-            <div className="hidden sm:block bg-black/60 border border-white/10 rounded-lg p-2.5 mb-5 max-w-md w-full text-left font-mono text-[11px] text-gray-400">
-              <div className="flex items-center justify-between border-b border-white/5 pb-1 mb-1.5 text-[10px] text-gray-400 font-sans font-bold uppercase tracking-wider">
-                <span>সার্ভার ডায়াগনস্টিক রিপোর্ট</span>
-                <span className="text-red-400 font-mono">STATUS: 403 FORBIDDEN</span>
-              </div>
-              <div className="truncate text-gray-300 mb-1">
-                <span className="text-gray-400">URL:</span> {streamUrl}
-              </div>
-              <div className="text-[10px] text-yellow-500/90 leading-normal">
-                কারণ: tvhunter.top সাইটে ক্লাউডফ্লেয়ারের সিকিউরিটি WAF সক্রিয় রয়েছে, যার কারণে ব্রাউজার বা প্লেয়ার সরাসরি m3u8 ফাইল পড়তে পারছে না।
-              </div>
+            <div className="flex items-center gap-2 mb-4 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              <span className="text-[11px] text-emerald-400 font-bold">পুনঃসংযোগের চেষ্টা চলছে...</span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2.5">
-              <button 
-                onClick={handleStartPlay}
-                className="bg-white text-sami-dark px-2.5 py-1 sm:px-4 sm:py-2.5 rounded-md sm:rounded-lg font-bold text-[10px] sm:text-xs hover:bg-sami-red hover:text-white transition-all shadow-xl active:scale-95 flex items-center gap-1 sm:gap-2"
-              >
-                <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> পুনরায় চেষ্টা করুন
-              </button>
-              <button 
-                onClick={() => { setShowUrlModal(true); setInputUrl(streamUrl); }}
-                className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-1 sm:px-4 sm:py-2.5 rounded-md sm:rounded-lg font-bold text-[10px] sm:text-xs transition-all border border-white/15 flex items-center gap-1 sm:gap-2"
-              >
-                <Link2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> লিঙ্ক পরিবর্তন
-              </button>
-              <button 
-                onClick={handleLoadTestStream}
-                className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 sm:px-4 sm:py-2.5 rounded-md sm:rounded-lg font-bold text-[10px] sm:text-xs transition-all flex items-center gap-1 sm:gap-2"
-                title="প্লেয়ার ও অডিও-ভিডিও কাজ করছে কিনা পরীক্ষা করুন"
-              >
-                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> টেস্ট স্ট্রিম চালান
-              </button>
-            </div>
+            <button 
+              onClick={handleStartPlay}
+              className="bg-white text-sami-dark px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg font-bold text-xs hover:bg-sami-red hover:text-white transition-all shadow-xl active:scale-95 flex items-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> পুনরায় চেষ্টা করুন
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Actual Player Layer */}
-      <div className={`w-full h-full relative z-10 transition-opacity duration-700 ${loading || error ? 'opacity-0' : 'opacity-100'}`}>
-        {Player && (
-          <Player
-            ref={playerRef}
-            url={streamUrl}
-            playing={playing}
-            controls={false}
-            muted={muted}
-            width="100%"
-            height="100%"
-            onReady={() => {
-              setLoading(false);
-              setError(false);
-            }}
-            onStart={() => {
-              setLoading(false);
-              setPlaying(true);
-              setError(false);
-            }}
-            onError={(err: any) => {
-              console.warn('Live TV player error notice:', err);
-              setError(true);
-              setLoading(false);
-              setPlaying(false);
-              setErrorMessage('স্ট্রিমিং প্রোভাইডার (tvhunter.top) এর ক্লাউডফ্লেয়ার সিকিউরিটি পেজের কারণে ভিডিও লোড হতে ব্যর্থ হয়েছে (HTTP 403 Forbidden)।');
-            }}
-            config={{
-              file: {
-                hlsOptions: {
-                  enableWorker: true,
-                  lowLatencyMode: true,
-                  backBufferLength: 60,
-                },
-                attributes: {
-                  controlsList: 'nodownload',
-                  onWaiting: () => setLoading(true),
-                  onPlaying: () => setLoading(false),
-                  style: { width: '100%', height: '100%', objectFit: isTheaterMode ? 'contain' : 'cover' }
-                }
-              }
-            }}
-          />
-        )}
+      {/* HTML5 Video Layer with HLS.js */}
+      <div className={`w-full h-full absolute inset-0 z-10 flex items-center justify-center overflow-hidden transition-opacity duration-700 ${loading || error ? 'opacity-0' : 'opacity-100'}`}>
+        <video
+          ref={videoRef}
+          className="w-full h-full bg-black block"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: isTheaterMode 
+              ? 'contain' 
+              : aspectMode === 'contain'
+              ? 'contain'
+              : aspectMode === 'fill'
+              ? 'fill'
+              : (isAnamorphicOr169 ? 'fill' : 'contain'),
+          }}
+          playsInline
+          muted={muted}
+          onLoadedMetadata={(e) => checkVideoDimensions(e.currentTarget)}
+          onWaiting={() => setLoading(true)}
+          onPlaying={(e) => {
+            checkVideoDimensions(e.currentTarget);
+            setLoading(false);
+            setPlaying(true);
+            setError(false);
+          }}
+          onCanPlay={(e) => {
+            checkVideoDimensions(e.currentTarget);
+            setLoading(false);
+          }}
+          onError={() => {
+            console.warn('Native video error fired');
+          }}
+        />
       </div>
 
       {/* Bottom Controls Overlay */}
@@ -358,7 +467,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-6">
                 <button 
-                  onClick={() => setPlaying(!playing)}
+                  onClick={handleTogglePlay}
                   className="text-white hover:text-sami-red transition-all transform active:scale-90"
                 >
                   {playing ? <Pause className="w-4.5 h-4.5 sm:w-6 sm:h-6" fill="currentColor" /> : <Play className="w-4.5 h-4.5 sm:w-6 sm:h-6" fill="currentColor" />}
@@ -371,7 +480,10 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                   >
                     {muted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </button>
-                  <div className="w-12 sm:w-20 md:w-24 h-1 bg-white/10 rounded-full overflow-hidden relative cursor-pointer">
+                  <div 
+                    onClick={() => setMuted(!muted)}
+                    className="w-12 sm:w-20 md:w-24 h-1 bg-white/10 rounded-full overflow-hidden relative cursor-pointer"
+                  >
                      <div className={`h-full bg-white transition-all ${muted ? 'w-0' : 'w-full'}`}></div>
                   </div>
                 </div>
@@ -379,8 +491,8 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                 <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-red-600/10 rounded-lg border border-red-600/20">
                    <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping"></span>
                    <span className="text-[10px] text-red-500 font-black uppercase tracking-widest flex items-center gap-2">
-                     Ultra HD <span className="text-white/40">|</span> 2160p 
-                     <span className="bg-white/10 px-1 rounded text-[8px]">4K</span>
+                     HD Live <span className="text-white/40">|</span> {currentResolution} 
+                     <span className="bg-white/10 px-1 rounded text-[8px]">HLS</span>
                    </span>
                 </div>
               </div>
@@ -402,11 +514,26 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                         exit={{ opacity: 0, scale: 0.9, y: -10 }}
                         className="absolute bottom-full right-0 mb-3 bg-[#0a0a0a] border border-white/10 rounded-xl overflow-hidden shadow-2xl min-w-[140px] premium-blur"
                       >
+                         <div className="px-4 py-2 border-b border-white/5 bg-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">Aspect Ratio</div>
+                         <div className="p-1.5 grid grid-cols-2 gap-1 border-b border-white/5">
+                           <button 
+                            onClick={() => { setAspectMode('fit'); setShowQualityMenu(false); }}
+                            className={`px-2 py-1.5 rounded-lg text-[9.5px] font-bold transition-colors text-center ${aspectMode === 'fit' ? 'bg-sami-red text-white' : 'text-gray-400 hover:bg-white/5'}`}
+                           >
+                             16:9 Fit
+                           </button>
+                           <button 
+                            onClick={() => { setAspectMode('contain'); setShowQualityMenu(false); }}
+                            className={`px-2 py-1.5 rounded-lg text-[9.5px] font-bold transition-colors text-center ${aspectMode === 'contain' ? 'bg-sami-red text-white' : 'text-gray-400 hover:bg-white/5'}`}
+                           >
+                             Original
+                           </button>
+                         </div>
                          <div className="px-4 py-2 border-b border-white/5 bg-white/5 text-[9px] font-black text-white/40 uppercase tracking-widest">Quality Settings</div>
-                         {['4K (UHD)', '1080p (HD)', '720p', '480p', 'Auto'].map((q) => (
+                         {availableQualities.map((q) => (
                            <button 
                             key={q}
-                            onClick={() => { setQuality(q); setShowQualityMenu(false); }}
+                            onClick={() => handleSelectQuality(q)}
                             className={`w-full text-left px-4 py-2.5 text-[10px] font-bold transition-colors ${quality === q ? 'bg-sami-red text-white' : 'text-gray-400 hover:bg-white/5'}`}
                            >
                              {q}
@@ -426,94 +553,6 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
               </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Stream URL Configuration Modal */}
-      <AnimatePresence>
-        {showUrlModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-zinc-900 border border-zinc-700/80 rounded-xl p-4 sm:p-5 max-w-md w-full shadow-2xl text-white"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
-                <div className="flex items-center gap-2">
-                  <Link2 size={16} className="text-sami-red" />
-                  <h4 className="font-bold text-sm">লাইভ স্ট্রিম লিঙ্ক সেটিংস</h4>
-                </div>
-                <button 
-                  onClick={() => setShowUrlModal(false)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <p className="text-zinc-400 text-xs mb-3">
-                যে কোনো সক্রিয় HLS (.m3u8), MP4 বা অনলাইন লাইভ স্ট্রিম লিঙ্ক এখানে পেস্ট করে সরাসরি প্লে করতে পারবেন:
-              </p>
-
-              <div className="mb-4">
-                <label className="text-[11px] font-semibold text-zinc-300 block mb-1.5">
-                  স্ট্রিম URL:
-                </label>
-                <input 
-                  type="text"
-                  value={inputUrl}
-                  onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="https://.../index.m3u8"
-                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-mono"
-                />
-              </div>
-
-              <div className="bg-zinc-950/60 rounded-lg p-2.5 border border-zinc-800/80 text-[11px] text-zinc-400 mb-4 space-y-1">
-                <p className="text-yellow-400/90 font-medium">⚠️ tvhunter.top লিঙ্ক সংক্রান্ত তথ্য:</p>
-                <p>
-                  <code>zibo1.tvhunter.top</code> ডোমেইনে ক্লাউডফ্লেয়ারের বট-প্রটেকশন সক্রিয় থাকার কারণে ব্রাউজার সরাসরি লিঙ্কটি প্লে করতে বাধাগ্রস্ত হচ্ছে (403 Forbidden)।
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-zinc-800">
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button 
-                    type="button"
-                    onClick={handleLoadTestStream}
-                    className="text-[11px] text-emerald-400 hover:underline py-1"
-                  >
-                    টেস্ট স্ট্রিম লোড করুন
-                  </button>
-                  <span className="text-zinc-600">|</span>
-                  <button 
-                    type="button"
-                    onClick={handleResetToDefault}
-                    className="text-[11px] text-zinc-400 hover:text-zinc-200 py-1"
-                  >
-                    ডিফল্ট রিসেট
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                  <button 
-                    type="button"
-                    onClick={() => setShowUrlModal(false)}
-                    className="px-3 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-white"
-                  >
-                    বাতিল
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => handleSaveCustomUrl(inputUrl)}
-                    className="bg-sami-red hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold"
-                  >
-                    সংরক্ষণ ও প্লে করুন
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
         )}
       </AnimatePresence>
     </div>
