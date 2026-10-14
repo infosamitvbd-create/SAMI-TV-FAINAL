@@ -14,11 +14,19 @@ interface LiveTVPlayerProps {
 export const DEFAULT_STREAM_URL = "http://103.238.115.159:8080/samitv/index.m3u8";
 
 export const getPlayableUrl = (url: string): string => {
-  // If the browser is running over HTTPS and target stream is HTTP on official IP,
-  // route through the local proxy to prevent browser Mixed Content (HTTP-in-HTTPS) block.
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
-    if (url.startsWith('http://103.238.115.159:8080/samitv/')) {
-      const sub = url.replace('http://103.238.115.159:8080/samitv/', '');
+  if (!url) return '';
+  // Convert official HTTP port 8080 stream to secure origin-relative proxy path.
+  // This completely eliminates Mixed Content (HTTP on HTTPS) and CORS errors on Netlify,
+  // and bypasses restrictive ISP / corporate firewalls that block outbound port 8080.
+  if (url.startsWith('http://103.238.115.159:8080/samitv/')) {
+    const sub = url.replace('http://103.238.115.159:8080/samitv/', '');
+    return `/api/stream/${sub || 'index.m3u8'}`;
+  }
+  // If running over HTTPS and URL is insecure HTTP
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+    if (url.includes('/samitv/')) {
+      const idx = url.indexOf('/samitv/');
+      const sub = url.substring(idx + '/samitv/'.length);
       return `/api/stream/${sub || 'index.m3u8'}`;
     }
   }
@@ -29,7 +37,7 @@ const getInitialStreamUrl = (): string => {
   try {
     const saved = localStorage.getItem('sami_custom_stream_url');
     if (saved) {
-      if (saved.includes('tvhunter') || saved.includes('zibo1')) {
+      if (saved.includes('tvhunter') || saved.includes('zibo1') || saved.includes('localhost') || saved.includes('103.238.115.159:8080/samitv/')) {
         localStorage.removeItem('sami_custom_stream_url');
         return DEFAULT_STREAM_URL;
       }
@@ -46,6 +54,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [reconnectTick, setReconnectTick] = useState(0);
   const [muted, setMuted] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [quality, setQuality] = useState('Auto');
@@ -81,7 +90,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
           setLoading(false);
           setPlaying(false);
         }
-      }, 10000);
+      }, 12000);
     } else {
       if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
     }
@@ -98,7 +107,8 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         setError(false);
         setLoading(true);
         setPlaying(true);
-      }, 7000);
+        setReconnectTick(prev => prev + 1);
+      }, 6000);
     }
     return () => {
       if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -145,6 +155,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     setError(false);
 
     const effectiveUrl = getPlayableUrl(streamUrl);
+    let networkRetryCount = 0;
 
     if (Hls.isSupported()) {
       const hls = new Hls({
@@ -153,10 +164,14 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         backBufferLength: 60,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
-        manifestLoadingTimeOut: 10000,
-        manifestLoadingMaxRetry: 3,
-        levelLoadingTimeOut: 10000,
-        fragLoadingTimeOut: 12000,
+        manifestLoadingTimeOut: 12000,
+        manifestLoadingMaxRetry: 4,
+        levelLoadingTimeOut: 12000,
+        fragLoadingTimeOut: 15000,
+        fragLoadingMaxRetry: 4,
+        xhrSetup: (xhr) => {
+          xhr.withCredentials = false;
+        }
       });
 
       hlsRef.current = hls;
@@ -165,6 +180,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
+        networkRetryCount = 0;
         setLoading(false);
         setError(false);
         if (data.levels && data.levels.length > 0) {
@@ -180,6 +196,12 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         });
       });
 
+      hls.on(Hls.Events.FRAG_LOADED, () => {
+        networkRetryCount = 0;
+        setLoading(false);
+        setError(false);
+      });
+
       hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
         if (hls.levels && hls.levels[data.level]) {
           const lvl = hls.levels[data.level];
@@ -190,13 +212,25 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       });
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
-        console.warn('HLS.js player event notice:', data);
+        console.warn('HLS.js player event notice:', data.type, data.details);
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              hls.startLoad();
+              networkRetryCount += 1;
+              if (networkRetryCount <= 3) {
+                console.log(`HLS Network error: retrying (${networkRetryCount}/3)...`);
+                hls.startLoad();
+              } else {
+                console.warn('HLS Network error limit reached, stream offline');
+                hls.destroy();
+                hlsRef.current = null;
+                setError(true);
+                setLoading(false);
+                setPlaying(false);
+              }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log('HLS Media error: recovering...');
               hls.recoverMediaError();
               break;
             default:
@@ -215,11 +249,26 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       const onLoadedMetadata = () => {
         setLoading(false);
         setError(false);
+        checkVideoDimensions(video);
         video.play().catch(() => {});
       };
+      const onCanPlay = () => {
+        setLoading(false);
+        setError(false);
+      };
+      const onVideoError = () => {
+        console.warn('Native video error fired');
+        setError(true);
+        setLoading(false);
+        setPlaying(false);
+      };
       video.addEventListener('loadedmetadata', onLoadedMetadata);
+      video.addEventListener('canplay', onCanPlay);
+      video.addEventListener('error', onVideoError);
       return () => {
         video.removeEventListener('loadedmetadata', onLoadedMetadata);
+        video.removeEventListener('canplay', onCanPlay);
+        video.removeEventListener('error', onVideoError);
       };
     } else {
       video.src = effectiveUrl;
@@ -231,7 +280,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         hlsRef.current = null;
       }
     };
-  }, [streamUrl, playing]);
+  }, [streamUrl, playing, reconnectTick]);
 
   const toggleFullscreen = () => {
     const el = document.getElementById('sami-player-root');
@@ -248,6 +297,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     setError(false);
     setLoading(true);
     setPlaying(true);
+    setReconnectTick(prev => prev + 1);
   };
 
   const handleTogglePlay = () => {
@@ -322,7 +372,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
             
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button 
-                onClick={() => { setError(false); setLoading(true); setPlaying(true); }}
+                onClick={handleStartPlay}
                 className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-full transition-all backdrop-blur-md border border-white/10"
                 title="Refresh"
               >

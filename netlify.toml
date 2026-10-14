@@ -1,0 +1,25 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# SAMI TV Live Streaming HLS Reverse Proxy for Netlify
+# Solves browser Mixed Content (HTTP-in-HTTPS) and CORS issues on Netlify
+[[redirects]]
+  from = "/api/stream/*"
+  to = "http://103.238.115.159:8080/samitv/:splat"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/api/stream/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS, HEAD"
+    Access-Control-Allow-Headers = "*"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Single Page Application (SPA) catch-all rule
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

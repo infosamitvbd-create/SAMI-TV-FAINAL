@@ -1,1 +1,5 @@
-/*    /index.html   200
+# SAMI TV Live Streaming HLS Reverse Proxy (prevents Mixed Content HTTP-in-HTTPS blocks & CORS issues on Netlify)
+/api/stream/*  http://103.238.115.159:8080/samitv/:splat  200!
+
+# Single Page Application (SPA) client-side routing fallback
+/*  /index.html  200

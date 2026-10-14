@@ -12,10 +12,19 @@ async function startServer() {
   });
 
   // SAMI TV Live Stream Proxy (prevents HTTPS mixed-content blocking for HTTP HLS stream)
-  app.get("/api/stream/*", async (req, res) => {
+  app.all("/api/stream/*", async (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "*");
+
+    if (req.method === "OPTIONS") {
+      return res.status(204).end();
+    }
+
     try {
       const subPath = (req.params as any)[0] || "index.m3u8";
-      const targetUrl = `http://103.238.115.159:8080/samitv/${subPath}`;
+      const queryString = req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : "";
+      const targetUrl = `http://103.238.115.159:8080/samitv/${subPath}${queryString}`;
       
       const upstream = await fetch(targetUrl);
       if (!upstream.ok) {
@@ -26,8 +35,11 @@ async function startServer() {
         (subPath.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/MP2T");
       
       res.setHeader("Content-Type", contentType);
-      res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Cache-Control", subPath.endsWith(".m3u8") ? "no-cache, no-store, must-revalidate" : "public, max-age=3600");
+
+      if (req.method === "HEAD") {
+        return res.status(200).end();
+      }
 
       const arrayBuffer = await upstream.arrayBuffer();
       res.send(Buffer.from(arrayBuffer));
