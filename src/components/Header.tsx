@@ -481,13 +481,13 @@ export const Header: React.FC<{
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="hidden lg:block flex-grow w-full lg:max-w-[728px] h-[90px] bg-transparent overflow-hidden group relative cursor-pointer select-none"
+          className="hidden lg:block flex-grow w-full lg:max-w-[728px] xl:max-w-[970px] h-[90px] bg-transparent overflow-hidden group relative cursor-pointer select-none"
           title="বিজ্ঞাপন"
         >
           <motion.img
-            src="https://globaltvbd.com/storage/advertisements/01KVZ4HKPS9DT08924H9Q9Y4GZ.jpg"
-            alt="Sponsored Ad"
-            className="w-full h-full object-contain transition-transform duration-700"
+            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgrt6f7LO-WIoFF_w2-Vl6PcdamY1y93md6unJUch7fPN4HIANXlP3-zSIlqXanyKM3T254QePtWlUYN-9skfkO-CVnHWYFHWW_Bj6TmCrtwN6Y_o54toGdztbaMQ4yQmPUvXTkSqK4SEZ3Uqz5HAh-5lx7n3j9XDYHXVsoKLmxnnC3EsPFto8RprO3urI/s320/kashem_cable_banner_1000x90.jpg"
+            alt="Sponsored Ad - Kashem Cable"
+            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-[1.01]"
             referrerPolicy="no-referrer"
           />
           <div className="absolute top-1 right-1 bg-black/75 backdrop-blur-sm text-[8px] font-black text-white/90 px-1.5 py-0.5 rounded uppercase tracking-widest pointer-events-none border border-white/10 z-10 shadow-sm">

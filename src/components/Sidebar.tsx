@@ -132,22 +132,6 @@ export const Sidebar: React.FC<{ onNavigate?: (page: string) => void }> = ({ onN
         </div>
       </div>
 
-      {/* User Specific Ads - Hidden on Mobile */}
-      <div className="hidden lg:flex flex-col gap-4">
-        <div className="bg-white border-2 border-sami-red/30 rounded-md overflow-hidden shadow-md group cursor-pointer relative p-1 bg-gradient-to-b from-gray-50 to-white">
-          <div className="relative w-full overflow-hidden rounded-sm">
-            <img 
-              src="https://globaltvbd.com/storage/advertisements/01KVZ4HKPS9DT08924H9Q9Y4GZ.jpg" 
-              alt="Sponsored Ad" 
-              className="w-full h-auto object-cover group-hover:scale-102 transition-transform duration-500 block"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute top-2 right-2 bg-sami-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-md">
-              Sponsored Ad
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Sidebar Category Blocks */}
       {['জাতীয়', 'সারাদেশ', 'আন্তর্জাতিক'].map((cat, idx) => {
