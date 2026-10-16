@@ -5,8 +5,14 @@ export default async (req: Request) => {
   
   // Extract the stream subpath after /api/stream/
   const match = url.pathname.match(/\/api\/stream\/?(.*)/);
-  const subPath = (match && match[1]) ? match[1] : "index.m3u8";
-  const targetUrl = `http://103.238.115.159:8080/samitv/${subPath}${url.search}`;
+  const subPath = (match && match[1]) ? match[1] : "video.m3u8";
+  
+  const searchParams = new URLSearchParams(url.search);
+  if (!searchParams.has("token")) {
+    searchParams.set("token", "Sami-TV");
+  }
+  const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  const targetUrl = `https://bdix.ottking.top:8082/Sami-TV/${subPath}${queryString}`;
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {

@@ -1,6 +1,6 @@
 # SAMI TV Live Streaming HLS Reverse Proxy for Netlify
 /api/stream/*  /.netlify/functions/stream  200!
-/api/stream/*  http://103.238.115.159:8080/samitv/:splat  200!
+/api/stream/*  https://bdix.ottking.top:8082/Sami-TV/:splat  200!
 
 # Single Page Application (SPA) client-side routing fallback
 /*  /index.html  200

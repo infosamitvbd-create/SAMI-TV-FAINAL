@@ -11,7 +11,7 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
-  // SAMI TV Live Stream Proxy (prevents HTTPS mixed-content blocking for HTTP HLS stream)
+  // SAMI TV Live Stream Proxy (supports proxying stream & fallback for firewalls)
   app.all("/api/stream/*", async (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
@@ -22,9 +22,10 @@ async function startServer() {
     }
 
     try {
-      const subPath = (req.params as any)[0] || "index.m3u8";
+      const subPath = (req.params as any)[0] || "video.m3u8";
       const queryString = req.url.includes("?") ? req.url.substring(req.url.indexOf("?")) : "";
-      const targetUrl = `http://103.238.115.159:8080/samitv/${subPath}${queryString}`;
+      const qs = queryString.includes("token=") ? queryString : (queryString ? `${queryString}&token=Sami-TV` : "?token=Sami-TV");
+      const targetUrl = `https://bdix.ottking.top:8082/Sami-TV/${subPath}${qs}`;
       
       const upstream = await fetch(targetUrl);
       if (!upstream.ok) {

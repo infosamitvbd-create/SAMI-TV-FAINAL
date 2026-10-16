@@ -11,23 +11,21 @@ interface LiveTVPlayerProps {
   onToggleTheater?: (val: boolean) => void;
 }
 
-export const DEFAULT_STREAM_URL = ((import.meta as any).env?.VITE_STREAM_URL as string) || "http://103.238.115.159:8080/samitv/index.m3u8";
+export const DEFAULT_STREAM_URL = ((import.meta as any).env?.VITE_STREAM_URL as string) || "https://bdix.ottking.top:8082/Sami-TV/video.m3u8?token=Sami-TV";
 
 export const getPlayableUrl = (url: string): string => {
   if (!url) return '';
-  // Convert official HTTP port 8080 stream to secure origin-relative proxy path.
-  // This completely eliminates Mixed Content (HTTP on HTTPS) and CORS errors on Netlify,
-  // and bypasses restrictive ISP / corporate firewalls that block outbound port 8080.
+  // Convert legacy HTTP port 8080 stream to secure origin-relative proxy path if encountered
   if (url.startsWith('http://103.238.115.159:8080/samitv/')) {
     const sub = url.replace('http://103.238.115.159:8080/samitv/', '');
-    return `/api/stream/${sub || 'index.m3u8'}`;
+    return `/api/stream/${sub || 'video.m3u8?token=Sami-TV'}`;
   }
   // If running over HTTPS and URL is insecure HTTP
   if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
     if (url.includes('/samitv/')) {
       const idx = url.indexOf('/samitv/');
       const sub = url.substring(idx + '/samitv/'.length);
-      return `/api/stream/${sub || 'index.m3u8'}`;
+      return `/api/stream/${sub || 'video.m3u8?token=Sami-TV'}`;
     }
   }
   return url;
@@ -141,7 +139,8 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     setLoading(true);
     setError(false);
 
-    const effectiveUrl = getPlayableUrl(streamUrl);
+    let currentUrl = getPlayableUrl(streamUrl);
+    let fallbackTried = false;
     let networkRetryCount = 0;
 
     if (Hls.isSupported()) {
@@ -163,7 +162,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
 
       hlsRef.current = hls;
 
-      hls.loadSource(effectiveUrl);
+      hls.loadSource(currentUrl);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {
@@ -204,8 +203,15 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               networkRetryCount += 1;
-              if (networkRetryCount <= 3) {
-                console.log(`HLS Network error: retrying (${networkRetryCount}/3)...`);
+              if (networkRetryCount <= 2) {
+                console.log(`HLS Network error: retrying (${networkRetryCount}/2)...`);
+                hls.startLoad();
+              } else if (!fallbackTried && currentUrl.includes('bdix.ottking.top:8082')) {
+                console.log('Direct BDIX port blocked, attempting proxy fallback...');
+                fallbackTried = true;
+                networkRetryCount = 0;
+                currentUrl = '/api/stream/video.m3u8?token=Sami-TV';
+                hls.loadSource(currentUrl);
                 hls.startLoad();
               } else {
                 console.warn('HLS Network error limit reached, stream offline');
@@ -232,7 +238,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       // Native HLS for Safari (iOS & macOS)
-      video.src = effectiveUrl;
+      video.src = currentUrl;
       const onLoadedMetadata = () => {
         setLoading(false);
         setError(false);
@@ -244,6 +250,14 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         setError(false);
       };
       const onVideoError = () => {
+        if (!fallbackTried && currentUrl.includes('bdix.ottking.top:8082')) {
+          console.log('Safari native video retry via proxy fallback...');
+          fallbackTried = true;
+          currentUrl = '/api/stream/video.m3u8?token=Sami-TV';
+          video.src = currentUrl;
+          video.play().catch(() => {});
+          return;
+        }
         console.warn('Native video error fired');
         setError(true);
         setLoading(false);
@@ -258,7 +272,7 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         video.removeEventListener('error', onVideoError);
       };
     } else {
-      video.src = effectiveUrl;
+      video.src = currentUrl;
     }
 
     return () => {
