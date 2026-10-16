@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'motion/react';
 interface LiveTVPlayerProps {
   isTheaterMode?: boolean;
   onToggleTheater?: (val: boolean) => void;
+  autoPlay?: boolean;
+  initialMuted?: boolean;
 }
 
 export const DEFAULT_STREAM_URL = ((import.meta as any).env?.VITE_STREAM_URL as string) || "https://bdix.ottking.top:8082/Sami-TV/video.m3u8?token=Sami-TV";
@@ -40,13 +42,19 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onToggleTheater }) => {
+export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ 
+  isTheaterMode, 
+  onToggleTheater,
+  autoPlay = true,
+  initialMuted = false 
+}) => {
   const [streamUrl] = useState<string>(DEFAULT_STREAM_URL);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(autoPlay);
   const [error, setError] = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const [playing, setPlaying] = useState(autoPlay);
   const [reconnectTick, setReconnectTick] = useState(0);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(initialMuted);
+  const [needsAudioGesture, setNeedsAudioGesture] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [quality, setQuality] = useState('Auto');
   const [availableQualities, setAvailableQualities] = useState<string[]>(['Auto', '720p HD']);
@@ -109,12 +117,36 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     return () => clearTimeout(timeout);
   }, [playing, loading, error, showControls]);
 
-  // Sync muted state
+  // Sync muted state to video element
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = muted;
     }
   }, [muted]);
+
+  // If browser blocked unmuted autoplay, unmute upon any first user gesture anywhere
+  useEffect(() => {
+    if (!needsAudioGesture) return;
+
+    const handleFirstGesture = () => {
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+        videoRef.current.play().catch(() => {});
+      }
+      setMuted(false);
+      setNeedsAudioGesture(false);
+    };
+
+    window.addEventListener('click', handleFirstGesture, { once: true });
+    window.addEventListener('touchstart', handleFirstGesture, { once: true });
+    window.addEventListener('keydown', handleFirstGesture, { once: true });
+
+    return () => {
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('touchstart', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+    };
+  }, [needsAudioGesture]);
 
   // Main HLS.js and Video stream setup
   useEffect(() => {
@@ -177,9 +209,23 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
             setAvailableQualities(['Auto', ...Array.from(new Set(lvls))]);
           }
         }
-        video.play().catch((err) => {
-          console.log('Autoplay deferred or muted required:', err);
-        });
+        
+        video.muted = muted;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setNeedsAudioGesture(false);
+            })
+            .catch((err) => {
+              console.log('Unmuted autoplay prevented by browser policy, switching to muted autoplay:', err);
+              // Fallback to muted playback so the live video still plays automatically!
+              video.muted = true;
+              setMuted(true);
+              setNeedsAudioGesture(true);
+              video.play().catch(e => console.warn('Muted autoplay fallback failed:', e));
+            });
+        }
       });
 
       hls.on(Hls.Events.FRAG_LOADED, () => {
@@ -243,11 +289,29 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         setLoading(false);
         setError(false);
         checkVideoDimensions(video);
-        video.play().catch(() => {});
+        video.muted = muted;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setNeedsAudioGesture(false);
+            })
+            .catch((err) => {
+              console.log('Safari unmuted autoplay prevented, playing muted:', err);
+              video.muted = true;
+              setMuted(true);
+              setNeedsAudioGesture(true);
+              video.play().catch(() => {});
+            });
+        }
       };
       const onCanPlay = () => {
         setLoading(false);
         setError(false);
+        if (video.paused && playing) {
+          video.muted = muted;
+          video.play().catch(() => {});
+        }
       };
       const onVideoError = () => {
         if (!fallbackTried && currentUrl.includes('bdix.ottking.top:8082')) {
@@ -298,10 +362,24 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
     setError(false);
     setLoading(true);
     setPlaying(true);
+    setMuted(false);
+    setNeedsAudioGesture(false);
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.play().catch(() => {});
+    }
     setReconnectTick(prev => prev + 1);
   };
 
   const handleTogglePlay = () => {
+    if (needsAudioGesture) {
+      if (videoRef.current) {
+        videoRef.current.muted = false;
+      }
+      setMuted(false);
+      setNeedsAudioGesture(false);
+      return;
+    }
     if (playing) {
       setPlaying(false);
       if (videoRef.current) {
@@ -346,6 +424,34 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60"></div>
       </div>
+
+      {/* Floating Unmute indicator if browser blocked initial unmuted autoplay */}
+      <AnimatePresence>
+        {needsAudioGesture && playing && !loading && !error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.85, y: 10 }}
+            className="absolute top-14 sm:top-20 left-1/2 -translate-x-1/2 z-40"
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoRef.current) {
+                  videoRef.current.muted = false;
+                  videoRef.current.play().catch(() => {});
+                }
+                setMuted(false);
+                setNeedsAudioGesture(false);
+              }}
+              className="bg-sami-red hover:bg-red-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 shadow-2xl shadow-red-600/50 backdrop-blur-md cursor-pointer border border-white/30 active:scale-95 transition-all animate-bounce"
+            >
+              <Volume2 className="w-4 h-4 shrink-0" />
+              <span>সাউন্ড চালু করতে এখানে ক্লিক করুন (Unmute)</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top Bar Overlay */}
       <AnimatePresence>
@@ -468,14 +574,16 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
       <div className={`w-full h-full absolute inset-0 z-10 flex items-center justify-center overflow-hidden transition-opacity duration-700 ${loading || error ? 'opacity-0' : 'opacity-100'}`}>
         <video
           ref={videoRef}
-          className="w-full h-full bg-black block"
+          className="w-full h-full bg-black block cursor-pointer"
           style={{
             width: '100%',
             height: '100%',
             objectFit: 'contain',
           }}
           playsInline
+          autoPlay={autoPlay}
           muted={muted}
+          onClick={handleTogglePlay}
           onLoadedMetadata={(e) => checkVideoDimensions(e.currentTarget)}
           onWaiting={() => setLoading(true)}
           onPlaying={(e) => {
@@ -520,13 +628,23 @@ export const LiveTVPlayer: React.FC<LiveTVPlayerProps> = ({ isTheaterMode, onTog
                 
                 <div className="flex items-center gap-2 sm:gap-3 group/vol">
                   <button 
-                    onClick={() => setMuted(!muted)}
+                    onClick={() => {
+                      const next = !muted;
+                      setMuted(next);
+                      if (videoRef.current) videoRef.current.muted = next;
+                      if (!next) setNeedsAudioGesture(false);
+                    }}
                     className="text-white/80 hover:text-white transition-colors"
                   >
                     {muted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </button>
                   <div 
-                    onClick={() => setMuted(!muted)}
+                    onClick={() => {
+                      const next = !muted;
+                      setMuted(next);
+                      if (videoRef.current) videoRef.current.muted = next;
+                      if (!next) setNeedsAudioGesture(false);
+                    }}
                     className="w-12 sm:w-20 md:w-24 h-1 bg-white/10 rounded-full overflow-hidden relative cursor-pointer"
                   >
                      <div className={`h-full bg-white transition-all ${muted ? 'w-0' : 'w-full'}`}></div>

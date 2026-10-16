@@ -112,7 +112,7 @@ export const Sidebar: React.FC<{ onNavigate?: (page: string) => void }> = ({ onN
           </div>
         </div>
         <div className="p-2 bg-gray-50">
-          <LiveTVPlayer />
+          <LiveTVPlayer autoPlay={false} initialMuted={true} />
         </div>
       </div>
 

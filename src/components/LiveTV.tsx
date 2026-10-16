@@ -169,7 +169,12 @@ export const LiveTV: React.FC<LiveTVProps> = ({ onNewsClick, onNavigate }) => {
             
             {/* Live TV Video Player Component Container */}
             <div className={`p-0 bg-black relative group w-full ${isTheaterMode ? '' : 'aspect-video'}`}>
-              <LiveTVPlayer isTheaterMode={isTheaterMode} onToggleTheater={setIsTheaterMode} />
+              <LiveTVPlayer 
+                isTheaterMode={isTheaterMode} 
+                onToggleTheater={setIsTheaterMode} 
+                autoPlay={true} 
+                initialMuted={false} 
+              />
             </div>
 
             {/* Title, Share & Meta Details Bar */}
