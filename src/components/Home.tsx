@@ -120,24 +120,6 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
       <div className="flex-grow flex flex-col gap-5 sm:gap-8">
         <HeroSection onNewsClick={onNewsClick} onNavigate={onNavigate} />
 
-        {/* 1st Sponsored Ad Banner (Fast) */}
-        <div 
-          onClick={() => onNavigate('/contact')}
-          className="w-full bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden group cursor-pointer relative p-1.5 sm:p-2 bg-gradient-to-r from-slate-50 via-white to-slate-50 transition-all hover:border-sami-red/40"
-          title="বিজ্ঞাপন ১"
-        >
-          <div className="relative w-full overflow-hidden rounded-lg max-h-[140px] sm:max-h-[110px] flex items-center justify-center bg-slate-50">
-            <img 
-              src="https://globaltvbd.com/storage/advertisements/01KVZ4HKPS9DT08924H9Q9Y4GZ.jpg" 
-              alt="Sponsored Ad 1" 
-              className="w-full h-full max-h-[140px] sm:max-h-[110px] object-contain group-hover:scale-[1.01] transition-transform duration-500 block"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider pointer-events-none">
-              Sponsored Ad
-            </div>
-          </div>
-        </div>
 
         {categorySections.map((section, idx) => {
           const items = getCategoryNews(section.keywords);
@@ -266,26 +248,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate, onNewsClick }) => {
               </div>
               </section>
 
-              {/* 2nd Sponsored Ad Banner */}
-              {idx === 1 && (
-                <div 
-                  onClick={() => onNavigate('/contact')}
-                  className="w-full bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden group cursor-pointer relative p-1.5 sm:p-2 bg-gradient-to-r from-slate-50 via-white to-slate-50 transition-all hover:border-sami-red/40"
-                  title="বিজ্ঞাপন ২"
-                >
-                  <div className="relative w-full overflow-hidden rounded-lg max-h-[140px] sm:max-h-[110px] flex items-center justify-center bg-slate-50">
-                    <img 
-                      src="https://globaltvbd.com/storage/advertisements/01KVZ4HKPS9DT08924H9Q9Y4GZ.jpg" 
-                      alt="Sponsored Ad 2" 
-                      className="w-full h-full max-h-[140px] sm:max-h-[110px] object-contain group-hover:scale-[1.01] transition-transform duration-500 block"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute top-1.5 right-1.5 bg-black/70 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider pointer-events-none">
-                      Sponsored Ad
-                    </div>
-                  </div>
-                </div>
-              )}
+
             </React.Fragment>
           );
         })}
