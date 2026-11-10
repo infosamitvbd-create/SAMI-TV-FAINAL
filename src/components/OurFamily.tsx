@@ -503,196 +503,76 @@ export const OurFamily: React.FC = () => {
       </AnimatePresence>
 
       {/* =========================================================================
-          DESKTOP (PC) VIEW HERO BANNER (With Cinematic Floating Light & Stagger)
+          CLEAN & PROFESSIONAL NEWSROOM HEADER
           ========================================================================= */}
-      <div className="hidden md:block bg-[#0b0c10] text-white border-b border-white/10 relative overflow-hidden">
-        {/* Floating Ambient Glowing Orbs */}
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.15, 1], 
-            opacity: [0.12, 0.22, 0.12],
-            x: [0, 20, 0]
-          }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-0 right-1/4 w-[600px] h-[350px] bg-red-600 rounded-full blur-[140px] pointer-events-none" 
-        />
-        <motion.div 
-          animate={{ 
-            scale: [1, 1.2, 1], 
-            opacity: [0.05, 0.12, 0.05],
-            y: [0, -15, 0]
-          }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-0 left-10 w-[350px] h-[220px] bg-amber-500 rounded-full blur-[110px] pointer-events-none" 
-        />
-
-        <div className="max-w-[1700px] mx-auto px-6 lg:px-12 py-14 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      <section className="bg-white border-b border-slate-200/90 shadow-2xs">
+        <div className="max-w-[1650px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             
-            {/* Left Content Stagger Animation */}
-            <motion.div 
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="space-y-4 max-w-3xl"
-            >
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="flex items-center gap-2.5"
-              >
-                <span className="px-3 py-1 bg-red-600/20 border border-red-500/40 text-red-400 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-1.5 shadow-xs">
-                  <ShieldCheck size={13} className="text-red-400" />
-                  SAMI TV PRESS CORPS • দেশজুড়ে প্রতিনিধি নেটওয়ার্ক
+            {/* Title & Description */}
+            <div className="space-y-2 max-w-3xl">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 sm:h-5 bg-[#990000] rounded-full shrink-0" />
+                <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-[#8b0000]">
+                  SAMI TV PRESS CORPS • অনুমোদিত প্রতিনিধি প্যানেল
                 </span>
-                <span className="text-white/40 text-xs">·</span>
-                <span className="text-white/70 text-xs font-bold flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  অনুমোদিত ও ভেরিফাইড সাংবাদিক প্যানেল
-                </span>
-              </motion.div>
+              </div>
 
-              <motion.h1 
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-3xl lg:text-5xl font-black text-white tracking-tight leading-tight"
-              >
-                সংবাদকর্মী ও <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-500 to-amber-500">প্রতিনিধিগণ</span>
-              </motion.h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug">
+                সংবাদকর্মী ও <span className="text-[#8b0000]">প্রতিনিধিগণ</span>
+              </h1>
 
-              <motion.p 
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="text-slate-300 text-sm lg:text-base leading-relaxed max-w-2xl"
-              >
-                সত্য প্রকাশে আপসহীন ও তৃণমূলের মানুষের কণ্ঠস্বর তুলে ধরতে দেশ ও বিদেশের ৬৪টি জেলায় সার্বক্ষণিক কর্মরত সামী টেলিভিশনের একঝাঁক সাহসী ও প্রতিশ্রুতিশীল সংবাদকর্মী।
-              </motion.p>
-            </motion.div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                দেশ ও বিদেশের সর্বশেষ সত্য সংবাদ দ্রুত ও বস্তুনিষ্ঠভাবে জনগণের সামনে তুলে ধরতে তৃণমূল পর্যায়ে সার্বক্ষণিক কর্মরত সামী টেলিভিশনের অনুমোদিত সাংবাদিক ও প্রতিনিধি দল।
+              </p>
+            </div>
 
-            {/* Right Quick Actions & Live Metric Ribbon (Staggered Entrance) */}
-            <motion.div 
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-              className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0"
-            >
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md flex items-center gap-6 shadow-xl">
-                <div className="text-center px-2">
-                  <motion.span 
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', delay: 0.4 }}
-                    className="text-2xl font-black text-white font-mono tabular-nums block"
-                  >
+            {/* Quick Metrics & Application Button */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 shrink-0">
+              <div className="bg-[#f8f9fa] border border-slate-200/90 rounded-xl px-4 py-2.5 flex items-center gap-4 sm:gap-6 shadow-2xs">
+                <div className="text-center">
+                  <span className="text-lg sm:text-xl font-black text-slate-900 font-mono tabular-nums block">
                     {convertToBn(filteredReporters.length)}
-                  </motion.span>
-                  <p className="text-[10px] uppercase font-bold text-slate-400 mt-0.5">সক্রিয় প্রতিনিধি</p>
+                  </span>
+                  <p className="text-[9.5px] uppercase font-bold text-slate-500">মোট প্রতিনিধি</p>
                 </div>
-                <div className="h-8 w-px bg-white/10"></div>
-                <div className="text-center px-2">
-                  <motion.span 
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', delay: 0.45 }}
-                    className="text-2xl font-black text-red-400 font-mono tabular-nums block"
-                  >
+                <div className="h-6 w-px bg-slate-200"></div>
+                <div className="text-center">
+                  <span className="text-lg sm:text-xl font-black text-[#8b0000] font-mono tabular-nums block">
                     ৬৪
-                  </motion.span>
-                  <p className="text-[10px] uppercase font-bold text-slate-400 mt-0.5">জেলা কভারেজ</p>
+                  </span>
+                  <p className="text-[9.5px] uppercase font-bold text-slate-500">জেলা কভারেজ</p>
                 </div>
-                <div className="h-8 w-px bg-white/10"></div>
-                <div className="text-center px-2">
-                  <motion.span 
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: 'spring', delay: 0.5 }}
-                    className="text-2xl font-black text-emerald-400 font-mono tabular-nums block"
-                  >
+                <div className="h-6 w-px bg-slate-200"></div>
+                <div className="text-center">
+                  <span className="text-lg sm:text-xl font-black text-emerald-600 font-mono tabular-nums block">
                     ১০০%
-                  </motion.span>
-                  <p className="text-[10px] uppercase font-bold text-slate-400 mt-0.5">ভেরিফাইড আইডি</p>
+                  </span>
+                  <p className="text-[9.5px] uppercase font-bold text-slate-500">ভেরিফাইড</p>
                 </div>
               </div>
 
-              <motion.button 
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+              <button 
                 onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-6 py-4 rounded-2xl font-bold text-sm shadow-[0_10px_25px_rgba(204,0,0,0.35)] flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0"
+                className="bg-[#990000] hover:bg-[#800000] active:bg-[#660000] text-white px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
-                <PlusCircle size={18} />
-                <span>সংবাদকর্মী হিসেবে আবেদন করুন</span>
-              </motion.button>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* =========================================================================
-          MOBILE VIEW HEADER BANNER (Fluid Entrance)
-          ========================================================================= */}
-      <motion.div 
-        initial={{ opacity: 0, y: -15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="md:hidden bg-gradient-to-b from-[#0a0a0a] via-[#141414] to-[#0a0a0a] text-white p-4 border-b border-white/10"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="px-2 py-0.5 bg-red-600 text-white rounded text-[8px] font-black uppercase tracking-wider">
-                PRESS CORPS
-              </span>
-              <span className="text-[9px] text-emerald-400 font-bold">ভেরিফাইড তালিকা</span>
+                <PlusCircle size={16} />
+                <span>প্রতিনিধি আবেদন</span>
+              </button>
             </div>
-            <h1 className="text-xl font-black text-white mt-1 font-brand">
-              সংবাদকর্মী ও <span className="text-sami-red">প্রতিনিধিগণ</span>
-            </h1>
-            <p className="text-[10.5px] text-slate-300 font-medium">
-              SAMI TV-র দেশ-বিদেশের সংবাদ প্রতিনিধি দল
-            </p>
-          </div>
 
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowModal(true)}
-            className="bg-red-600 active:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0 flex items-center gap-1 shadow-md cursor-pointer"
-          >
-            <PlusCircle size={14} />
-            <span>আবেদন</span>
-          </motion.button>
-        </div>
-
-        {/* Mobile Quick Stats */}
-        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-white/10 text-center">
-          <div className="bg-white/5 py-1.5 px-1.5 rounded-lg">
-            <span className="text-xs font-black text-white font-mono">{convertToBn(filteredReporters.length)} জন</span>
-            <p className="text-[8px] uppercase font-bold text-slate-400">মোট প্রতিনিধি</p>
-          </div>
-          <div className="bg-white/5 py-1.5 px-1.5 rounded-lg">
-            <span className="text-xs font-black text-red-400 font-mono">৬৪</span>
-            <p className="text-[8px] uppercase font-bold text-slate-400">জেলায় বিস্তৃত</p>
-          </div>
-          <div className="bg-white/5 py-1.5 px-1.5 rounded-lg">
-            <span className="text-xs font-black text-emerald-400 font-mono">১০০%</span>
-            <p className="text-[8px] uppercase font-bold text-slate-400">ভেরিফাইড</p>
           </div>
         </div>
-      </motion.div>
+      </section>
 
       {/* =========================================================================
-          INTERACTIVE TOOLBAR (Division Filters & Live Search - Always Sticky in One Place)
+          CLEAN STICKY TOOLBAR (Division Filters & Search)
           ========================================================================= */}
-      <div 
-        className="sticky top-[96px] sm:top-[100px] lg:top-10 z-35 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all"
-      >
-        <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+        <div className="max-w-[1650px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
           
-          {/* Division Pills with Smooth Sliding Highlight */}
-          <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-1 md:pb-0 relative">
+          {/* Division Filter Pills */}
+          <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-1 md:pb-0">
             {divisions.map((div) => {
               const isActive = selectedDivision === div;
               const count = div === 'সব' 
@@ -702,24 +582,15 @@ export const OurFamily: React.FC = () => {
                 <button
                   key={div}
                   onClick={() => setSelectedDivision(div)}
-                  className={`relative px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0 ${
                     isActive 
-                      ? 'text-white font-black' 
-                      : 'text-slate-600 hover:text-slate-900 bg-slate-100/80 hover:bg-slate-200'
+                      ? 'bg-[#990000] text-white shadow-xs' 
+                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
                   }`}
                 >
-                  {/* Sliding Active Indicator */}
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeDivisionPill"
-                      className="absolute inset-0 bg-gradient-to-r from-red-600 to-rose-600 rounded-xl shadow-xs -z-0"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  
-                  <span className="relative z-10">{div}</span>
-                  <span className={`relative z-10 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200/90 text-slate-600'
+                  <span>{div}</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
                   }`}>
                     {convertToBn(count)}
                   </span>
@@ -728,22 +599,22 @@ export const OurFamily: React.FC = () => {
             })}
           </div>
 
-          {/* Search Box with Interactive Clear */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+          {/* Search Input */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input 
               type="text" 
-              placeholder="নাম, পদবী, এলাকা বা আইডি দিয়ে খুঁজুন..."
+              placeholder="নাম, পদবী, এলাকা বা আইডি..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 bg-slate-100 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-600/20 focus:border-red-600 transition-all"
+              className="w-full pl-8 pr-8 py-1.5 bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#990000] transition-all"
             />
             {searchTerm && (
               <button 
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
               >
-                <X size={14} />
+                <X size={13} />
               </button>
             )}
           </div>
@@ -751,156 +622,136 @@ export const OurFamily: React.FC = () => {
       </div>
 
       {/* =========================================================================
-          REPORTERS GRID CONTAINER (Staggered Cascade Motion Entrance)
+          REPORTERS GRID CONTAINER
           ========================================================================= */}
-      <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12 pt-6">
+      <div className="max-w-[1650px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <div className="w-10 h-10 border-3 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">সংবাদকর্মী তথ্য লোড হচ্ছে...</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-2.5">
+            <div className="w-8 h-8 border-2 border-[#990000] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-slate-400 font-bold">সংবাদকর্মী তথ্য লোড হচ্ছে...</p>
           </div>
         ) : filteredReporters.length > 0 ? (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredReporters.map((rep, idx) => {
-                const repIdDisplay = rep.reporterId ? convertToBn(rep.reporterId) : convertToBn(`২৬-${String(idx + 1).padStart(4, '0')}`);
-                return (
-                  <motion.div
-                    key={rep.id || idx}
-                    variants={cardItemVariants}
-                    layout
-                    whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                    className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl shadow-xs hover:shadow-2xl hover:border-red-400/60 transition-all duration-300 flex flex-col justify-between overflow-hidden group relative"
-                  >
-                    {/* Top Header Strip: Metallic Press Credential Style */}
-                    <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-3.5 py-2 flex items-center justify-between text-[11px] font-bold border-b border-white/5 relative overflow-hidden">
-                      <div className="flex items-center gap-1.5 text-red-400">
-                        <CreditCard size={13} />
-                        <span className="font-mono tracking-wider font-black">আইডি: {repIdDisplay}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5">
-                        {rep.isKeyLeader && (
-                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
-                            কেন্দ্রীয়
-                          </span>
-                        )}
-                        <span className="px-2 py-0.5 rounded bg-white/10 text-[9.5px] text-slate-300 font-semibold">
-                          {rep.division || 'বাংলাদেশ'}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredReporters.map((rep, idx) => {
+              const repIdDisplay = rep.reporterId ? convertToBn(rep.reporterId) : convertToBn(`২৬-${String(idx + 1).padStart(4, '0')}`);
+              return (
+                <div
+                  key={rep.id || idx}
+                  className="bg-white border border-slate-200/90 rounded-xl shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between overflow-hidden group"
+                >
+                  {/* Card Header Strip */}
+                  <div className="bg-[#f8f9fa] border-b border-slate-200/80 px-3.5 py-2 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-[#8b0000] font-mono font-bold text-[11px]">
+                      <CreditCard size={12} className="text-[#8b0000]" />
+                      <span>আইডি: {repIdDisplay}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {rep.isKeyLeader && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold">
+                          কেন্দ্রীয়
                         </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] text-slate-600 font-semibold">
+                        {rep.division || 'বাংলাদেশ'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-3.5 flex gap-3 items-start">
+                    {/* Photo with Verified Badge */}
+                    <div className="relative w-18 h-22 sm:w-20 sm:h-24 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                      <img 
+                        src={rep.imageUrl || "https://picsum.photos/seed/user/400/400"} 
+                        alt={rep.name} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-2xs" title="ভেরিফাইড প্রতিনিধি">
+                        <Check size={9} strokeWidth={3} />
                       </div>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="p-4 flex gap-3.5 items-start">
-                      {/* Photo with Verified Pulse Badge */}
-                      <div className="relative w-20 h-24 sm:w-22 sm:h-26 rounded-2xl overflow-hidden bg-slate-100 shrink-0 border-2 border-slate-200 group-hover:border-red-500 shadow-sm transition-colors duration-300">
-                        <img 
-                          src={rep.imageUrl || "https://picsum.photos/seed/user/400/400"} 
-                          alt={rep.name} 
-                          className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xs" title="ভেরিফাইড প্রতিনিধি">
-                          <Check size={10} strokeWidth={3} />
-                        </div>
+                    {/* Information */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <h3 className="text-sm sm:text-[15px] font-extrabold text-slate-900 leading-snug truncate group-hover:text-[#990000] transition-colors">
+                        {rep.name}
+                      </h3>
+
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#8b0000] truncate">
+                        <Briefcase size={12} className="shrink-0" />
+                        <span className="truncate">{rep.designation}</span>
                       </div>
 
-                      {/* Details Column */}
-                      <div className="flex-1 min-w-0 space-y-1">
-                        {/* Name */}
-                        <h3 className="text-base font-black text-slate-900 leading-snug truncate group-hover:text-red-600 transition-colors">
-                          {rep.name}
-                        </h3>
-
-                        {/* Designation */}
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-red-600 truncate">
-                          <Briefcase size={12} className="shrink-0 text-red-600" />
-                          <span className="truncate">{rep.designation}</span>
-                        </div>
-
-                        {/* Location */}
-                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 truncate">
-                          <MapPin size={11} className="shrink-0 text-slate-400" />
-                          <span className="truncate">{rep.location || 'জামালপুর সদর'}</span>
-                        </div>
-
-                        {/* Phone with Copy Action */}
-                        {rep.phone && (
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <a 
-                              href={`tel:${rep.phone}`}
-                              className="flex items-center gap-1 text-[11.5px] font-mono font-bold text-slate-700 hover:text-red-600 transition-colors"
-                            >
-                              <Phone size={11} className="text-slate-400" />
-                              <span>{convertToBn(rep.phone)}</span>
-                            </a>
-                            <button 
-                              onClick={(e) => handleCopyPhone(e, rep.phone, rep.id || String(idx))}
-                              className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                              title="ফোন নম্বর কপি করুন"
-                            >
-                              {copiedPhoneId === (rep.id || String(idx)) ? (
-                                <Check size={11} className="text-emerald-600" />
-                              ) : (
-                                <Copy size={11} />
-                              )}
-                            </button>
-                          </div>
-                        )}
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 truncate">
+                        <MapPin size={11} className="shrink-0 text-slate-400" />
+                        <span className="truncate">{rep.location || 'জামালপুর'}</span>
                       </div>
-                    </div>
-
-                    {/* Card Footer Actions: Open ID Card & Quick Call */}
-                    <div className="bg-slate-50/80 border-t border-slate-100 px-3.5 py-2.5 flex items-center justify-between gap-2">
-                      <button 
-                        onClick={() => handleOpenIdCard(rep)}
-                        className="flex-1 bg-white hover:bg-slate-100 active:bg-slate-200 text-slate-800 border border-slate-200/90 py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer group/btn"
-                      >
-                        <CreditCard size={12} className="text-red-600 group-hover/btn:scale-110 transition-transform" />
-                        <span>প্রেস কার্ড দেখুন</span>
-                      </button>
 
                       {rep.phone && (
-                        <a 
-                          href={`tel:${rep.phone}`}
-                          className="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow-xs"
-                          title="সরাসরি কল করুন"
-                        >
-                          <PhoneCall size={12} />
-                          <span className="hidden sm:inline">কল</span>
-                        </a>
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <a 
+                            href={`tel:${rep.phone}`}
+                            className="flex items-center gap-1 text-[11px] font-mono font-bold text-slate-700 hover:text-[#990000] transition-colors"
+                          >
+                            <Phone size={10} className="text-slate-400" />
+                            <span>{convertToBn(rep.phone)}</span>
+                          </a>
+                          <button 
+                            onClick={(e) => handleCopyPhone(e, rep.phone, rep.id || String(idx))}
+                            className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                            title="ফোন নম্বর কপি করুন"
+                          >
+                            {copiedPhoneId === (rep.id || String(idx)) ? (
+                              <Check size={11} className="text-emerald-600" />
+                            ) : (
+                              <Copy size={11} />
+                            )}
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </motion.div>
+                  </div>
+
+                  {/* Card Bottom Actions */}
+                  <div className="bg-[#f8f9fa] border-t border-slate-200/70 px-3 py-2 flex items-center justify-between gap-2">
+                    <button 
+                      onClick={() => handleOpenIdCard(rep)}
+                      className="flex-1 bg-white hover:bg-red-50 hover:text-[#990000] hover:border-red-200 text-slate-700 border border-slate-200/90 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <CreditCard size={12} className="text-[#8b0000]" />
+                      <span>প্রেস কার্ড</span>
+                    </button>
+
+                    {rep.phone && (
+                      <a 
+                        href={`tel:${rep.phone}`}
+                        className="bg-[#990000] hover:bg-[#800000] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all shadow-2xs"
+                        title="সরাসরি কল করুন"
+                      >
+                        <PhoneCall size={12} />
+                        <span>কল</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
-          /* Empty Search / Filter State */
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center my-8 shadow-xs"
-          >
-            <Users size={40} className="mx-auto text-slate-300 mb-3" />
-            <h3 className="text-base font-bold text-slate-800 mb-1">কোনো সংবাদকর্মী পাওয়া যায়নি</h3>
-            <p className="text-slate-400 text-xs">অন্য নাম, পদবী বা ফিল্টার নির্বাচন করে পুনরায় চেষ্টা করুন।</p>
+          <div className="bg-white rounded-xl border border-slate-200/90 p-10 text-center my-6 shadow-2xs">
+            <Users size={36} className="mx-auto text-slate-300 mb-2" />
+            <h3 className="text-sm font-bold text-slate-800 mb-1">কোনো সংবাদকর্মী পাওয়া যায়নি</h3>
+            <p className="text-slate-400 text-xs">অন্য নাম, পদবী বা ফিল্টার দিয়ে পুনরায় চেষ্টা করুন।</p>
             <button 
               onClick={() => { setSelectedDivision('সব'); setSearchTerm(''); }}
-              className="mt-4 bg-red-600 text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-red-700 transition-colors cursor-pointer"
+              className="mt-3.5 bg-[#990000] text-white px-4 py-1.5 rounded-lg font-bold text-xs hover:bg-[#800000] transition-colors cursor-pointer"
             >
               সকল সংবাদকর্মী দেখুন
             </button>
-          </motion.div>
+          </div>
         )}
 
       </div>
