@@ -748,7 +748,7 @@ export const LiveTV: React.FC<LiveTVProps> = ({ onNewsClick, onNavigate }) => {
                 <div className="p-8 text-center text-slate-400">
                   <Calendar size={32} className="mx-auto mb-2 opacity-30" />
                   <p className="text-xs font-bold text-slate-600">কোনো অনুষ্ঠান সূচী পাওয়া যায়নি</p>
-                  <p className="text-[10px] text-slate-400 font-medium mt-1">অ্যাডমিন প্যানেল থেকে নতুন অনুষ্ঠান সূচী যুক্ত করা হলে এখানে প্রদর্শিত হবে</p>
+                  <p className="text-[10px] text-slate-400 font-medium mt-1">শিঘ্রই নতুন অনুষ্ঠান সূচী যুক্ত করা হবে</p>
                 </div>
               )}
             </div>

@@ -249,8 +249,25 @@ export const AdminPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        if (currentUser.email?.toLowerCase().trim() === 'info.samitv.bd@gmail.com') {
+          setIsLocalAdmin(true);
+          setUserRole('admin');
+          sessionStorage.setItem('sami_admin_auth', 'true');
+          sessionStorage.setItem('sami_user_role', 'admin');
+          sessionStorage.setItem('sami_admin_email', 'info.samitv.bd@gmail.com');
+        } else {
+          // If a user with another email is logged in, they cannot have admin privileges
+          if (userRole === 'admin') {
+            setIsLocalAdmin(false);
+            sessionStorage.removeItem('sami_admin_auth');
+            sessionStorage.removeItem('sami_user_role');
+            sessionStorage.removeItem('sami_admin_email');
+          }
+        }
+      }
       setLoading(false);
     });
 
@@ -364,18 +381,7 @@ export const AdminPanel: React.FC = () => {
 
     // --- MAIN ADMIN LOGIN MODE ---
     if (loginMode === 'admin') {
-      if (
-        (input === 'samitv' && (pinInput === 'samitv' || pinInput === '')) ||
-        (input === 'admin' && (pinInput === 'admin123' || pinInput === 'admin' || pinInput === 'samitv' || pinInput === ''))
-      ) {
-        setIsLocalAdmin(true);
-        setUserRole('admin');
-        sessionStorage.setItem('sami_admin_auth', 'true');
-        sessionStorage.setItem('sami_user_role', 'admin');
-        showNotification('মূল অ্যাডমিন প্যানেলে স্বাগতম!', 'success');
-        return;
-      }
-      setLoginError('মূল অ্যাডমিন ইউজারনেম বা পাসওয়ার্ড সঠিক নয়! (ডিফল্ট: samitv)');
+      setLoginError('মূল অ্যাডমিন প্যানেলে কোনো ইউজারনেম বা পাসওয়ার্ড দিয়ে প্রবেশ বন্ধ রয়েছে। শুধুমাত্র অনুমোদিত গুগল অ্যাকাউন্ট দিয়ে লগইন করুন।');
       return;
     }
 
@@ -483,15 +489,32 @@ export const AdminPanel: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      setLoginError('');
       const provider = new GoogleAuthProvider();
       const res = await signInWithPopup(auth, provider);
-      setUserRole('journalist'); // Google users can publish news
-      setJournalistName(res.user.displayName || 'গুগল ব্যবহারকারী');
-      setNewsForm(prev => ({ ...prev, journalistName: res.user.displayName || 'গুগল ব্যবহারকারী' }));
-      setActiveTab('news');
-      showNotification('গুগল দিয়ে সফলভাবে লগইন হয়েছে!', 'success');
-    } catch (error) {
+      const email = res.user.email?.toLowerCase().trim();
+
+      if (email === 'info.samitv.bd@gmail.com') {
+        setUser(res.user);
+        setIsLocalAdmin(true);
+        setUserRole('admin');
+        sessionStorage.setItem('sami_admin_auth', 'true');
+        sessionStorage.setItem('sami_user_role', 'admin');
+        sessionStorage.setItem('sami_admin_email', 'info.samitv.bd@gmail.com');
+        showNotification('মূল অ্যাডমিন প্যানেলে স্বাগতম!', 'success');
+      } else {
+        await signOut(auth);
+        setUser(null);
+        setIsLocalAdmin(false);
+        sessionStorage.removeItem('sami_admin_auth');
+        sessionStorage.removeItem('sami_user_role');
+        sessionStorage.removeItem('sami_admin_email');
+        setLoginError('অ্যাক্সেস অস্বীকৃত! শুধুমাত্র অনুমোদিত অ্যাডমিন গুগল অ্যাকাউন্ট দ্বারা অ্যাডমিন প্যানেলে প্রবেশ করা যাবে।');
+        showNotification('অননুমোদিত অ্যাকাউন্ট! অ্যাক্সেস প্রত্যাখ্যাত হয়েছে।', 'error');
+      }
+    } catch (error: any) {
       console.error("Login Error: ", error);
+      setLoginError('গুগল লগইন সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।');
       showNotification('গুগল লগইন ব্যর্থ হয়েছে', 'error');
     }
   };
@@ -504,21 +527,33 @@ export const AdminPanel: React.FC = () => {
     sessionStorage.removeItem('sami_admin_auth');
     sessionStorage.removeItem('sami_user_role');
     sessionStorage.removeItem('sami_journalist_name');
+    sessionStorage.removeItem('sami_admin_email');
   };
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('sami_admin_auth');
     const savedRole = sessionStorage.getItem('sami_user_role') as 'admin' | 'journalist' | null;
     const savedName = sessionStorage.getItem('sami_journalist_name');
+    const savedEmail = sessionStorage.getItem('sami_admin_email')?.toLowerCase().trim();
 
     if (savedAuth === 'true') {
-      setIsLocalAdmin(true);
-      if (savedRole) setUserRole(savedRole);
-      if (savedName) {
-        setJournalistName(savedName);
-        setNewsForm(prev => ({ ...prev, journalistName: savedName }));
-      }
-      if (savedRole === 'journalist') {
+      if (savedRole === 'admin') {
+        if (savedEmail === 'info.samitv.bd@gmail.com') {
+          setIsLocalAdmin(true);
+          setUserRole('admin');
+        } else {
+          sessionStorage.removeItem('sami_admin_auth');
+          sessionStorage.removeItem('sami_user_role');
+          sessionStorage.removeItem('sami_admin_email');
+          setIsLocalAdmin(false);
+        }
+      } else if (savedRole === 'journalist') {
+        setIsLocalAdmin(true);
+        setUserRole('journalist');
+        if (savedName) {
+          setJournalistName(savedName);
+          setNewsForm(prev => ({ ...prev, journalistName: savedName }));
+        }
         setActiveTab('news');
       }
     }
@@ -978,9 +1013,15 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const isAuthorizedAdmin = 
+    (isLocalAdmin && sessionStorage.getItem('sami_admin_email') === 'info.samitv.bd@gmail.com') ||
+    (user && user.email?.toLowerCase().trim() === 'info.samitv.bd@gmail.com');
+
+  const isAuthorizedJournalist = isLocalAdmin && userRole === 'journalist';
+
   if (loading) return <div className="flex items-center justify-center h-screen font-eng">অ্যাডমিন প্যানেল লোড হচ্ছে...</div>;
 
-  if (!isLocalAdmin && (!user || user.email !== 'info.samitv.bd@gmail.com')) {
+  if (!isAuthorizedAdmin && !isAuthorizedJournalist) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-sami-dark to-slate-900 p-4 relative overflow-hidden font-sans">
         {/* Decorative Elements */}
@@ -993,90 +1034,144 @@ export const AdminPanel: React.FC = () => {
           className="bg-white p-6 sm:p-8 rounded-3xl shadow-2xl max-w-md w-full relative z-10 border border-slate-100/80"
         >
           {/* Logo & Header */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <SAMILogo className="scale-105 mb-2 mx-auto" />
             <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-3">
-              অ্যাডমিন পোর্টাল
+              {loginMode === 'admin' ? 'মূল অ্যাডমিন পোর্টাল' : 'প্রতিনিধি পোর্টাল'}
             </h1>
             <p className="text-xs text-slate-500 font-bold mt-1">
-              ওয়েবসাইট ব্যবস্থাপনা ও সেটিংস নিয়ন্ত্রণ করুন
+              {loginMode === 'admin' 
+                ? 'ওয়েবসাইট ব্যবস্থাপনা ও নিয়ন্ত্রণ করতে লগইন করুন' 
+                : 'সংবাদ প্রকাশ করতে সাংবাদিক অ্যাকাউন্টে প্রবেশ করুন'}
             </p>
           </div>
 
-          <form onSubmit={handleCustomLogin} className="space-y-4 text-left">
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block ml-0.5">
-                অ্যাডমিন ইউজারনেম
-              </label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  required
-                  value={loginInput.username}
-                  onChange={(e) => setLoginInput({...loginInput, username: e.target.value})}
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-200 outline-none focus:border-sami-red focus:ring-2 focus:ring-sami-red/10 transition-all font-bold text-sm bg-slate-50/60 focus:bg-white text-slate-900"
-                  placeholder="ইউজারনেম (samitv)"
-                />
-                <User size={18} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-black text-slate-700 uppercase tracking-wider block ml-0.5">
-                পাসওয়ার্ড
-              </label>
-              <div className="relative">
-                <input 
-                  type="password" 
-                  required
-                  value={loginInput.password}
-                  onChange={(e) => setLoginInput({...loginInput, password: e.target.value})}
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-200 outline-none focus:border-sami-red focus:ring-2 focus:ring-sami-red/10 transition-all font-bold text-sm bg-slate-50/60 focus:bg-white text-slate-900 font-mono"
-                  placeholder="পাসওয়ার্ড"
-                />
-                <Lock size={18} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-            
-            {loginError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-                <p className="text-red-600 text-xs font-bold">{loginError}</p>
-              </div>
-            )}
-
-            <button 
-              type="submit"
-              className="w-full text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
-            >
-              <LogIn size={18} />
-              <span>অ্যাডমিন প্যানেলে লগইন করুন</span>
-            </button>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-100"></div>
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-3 text-gray-400 font-bold tracking-widest text-[9px]">অথবা</span>
-              </div>
-            </div>
-
-            <button 
+          {/* Mode Switcher */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl mb-5">
+            <button
               type="button"
-              onClick={handleGoogleLogin}
-              className="w-full bg-white border-2 border-gray-100 text-gray-700 py-2.5 rounded-2xl font-bold flex items-center justify-center gap-2.5 hover:bg-gray-50 transition-all text-xs active:scale-[0.98] cursor-pointer shadow-xs"
+              onClick={() => {
+                setLoginMode('admin');
+                setLoginError('');
+              }}
+              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
+                loginMode === 'admin'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-              গুগল অ্যাকাউন্ট দিয়ে প্রবেশ
+              মূল অ্যাডমিন
             </button>
-          </form>
+            <button
+              type="button"
+              onClick={() => {
+                setLoginMode('journalist');
+                setLoginError('');
+              }}
+              className={`flex-1 py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
+                loginMode === 'journalist'
+                  ? 'bg-sami-red text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              প্রতিনিধি / সাংবাদিক
+            </button>
+          </div>
+
+          {loginMode === 'admin' ? (
+            <div className="space-y-4 text-center">
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-left space-y-2.5">
+                <div className="flex items-center gap-2 text-xs font-black text-slate-800">
+                  <ShieldCheck size={16} className="text-sami-red shrink-0" />
+                  <span>নিরাপদ গুগল ভেরিফিকেশন</span>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  নিরাপত্তার স্বার্থে অ্যাডমিন প্যানেলে কোনো ইউজারনেম বা পাসওয়ার্ড দিয়ে প্রবেশের সুযোগ নেই। শুধুমাত্র অনুমোদিত গুগল অ্যাকাউন্ট দিয়ে সরাসরি লগইন করুন।
+                </p>
+              </div>
+
+              {loginError && (
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-center">
+                  <p className="text-red-600 text-xs font-bold leading-relaxed">{loginError}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-slate-300 text-slate-800 py-3.5 px-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-sm hover:shadow active:scale-[0.98] cursor-pointer text-sm"
+              >
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  className="w-5 h-5 shrink-0"
+                />
+                <span>Google অ্যাকাউন্ট দিয়ে প্রবেশ করুন</span>
+              </button>
+
+              <div className="pt-2 text-[11px] text-slate-500 font-semibold flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>শুধুমাত্র প্রধান অ্যাডমিনের জন্য সংরক্ষিত</span>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleCustomLogin} className="space-y-4 text-left">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider block ml-0.5">
+                  প্রতিনিধি আইডি / নাম / মোবাইল
+                </label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    required
+                    value={loginInput.username}
+                    onChange={(e) => setLoginInput({...loginInput, username: e.target.value})}
+                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-200 outline-none focus:border-sami-red focus:ring-2 focus:ring-sami-red/10 transition-all font-bold text-sm bg-slate-50/60 focus:bg-white text-slate-900"
+                    placeholder="আইডি বা মোবাইল নম্বর লিখুন"
+                  />
+                  <User size={18} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider block ml-0.5">
+                  পাসওয়ার্ড / পিন
+                </label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    required
+                    value={loginInput.password}
+                    onChange={(e) => setLoginInput({...loginInput, password: e.target.value})}
+                    className="w-full pl-4 pr-10 py-3 rounded-xl border border-slate-200 outline-none focus:border-sami-red focus:ring-2 focus:ring-sami-red/10 transition-all font-bold text-sm bg-slate-50/60 focus:bg-white text-slate-900 font-mono"
+                    placeholder="পিন নম্বর লিখুন"
+                  />
+                  <Lock size={18} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+              
+              {loginError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-center">
+                  <p className="text-red-600 text-xs font-bold leading-relaxed">{loginError}</p>
+                </div>
+              )}
+
+              <button 
+                type="submit"
+                className="w-full text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] cursor-pointer bg-sami-red hover:bg-red-700 shadow-sami-red/20"
+              >
+                <LogIn size={18} />
+                <span>সাংবাদিক প্যানেলে প্রবেশ করুন</span>
+              </button>
+            </form>
+          )}
           
           <div className="mt-8 pt-6 border-t border-gray-100 space-y-1 font-sans text-center">
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">
               &copy; {new Date().getFullYear()} সামি মাল্টিমিডিয়া লিমিটেড
             </p>
             <p className="text-[11px] text-sami-red font-black uppercase tracking-tighter">
-              SAMI TV মোবাইল রিপোর্টিং প্যানেল
+              SAMI TV ডিজিটাল ম্যানেজমেন্ট সিস্টেম
             </p>
           </div>
         </motion.div>
@@ -1272,7 +1367,7 @@ export const AdminPanel: React.FC = () => {
              </div>
              <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-slate-200 truncate">
-                  {user?.email?.split('@')[0] || 'Admin'}
+                  {userRole === 'journalist' ? (journalistName || 'প্রতিনিধি') : 'প্রধান অ্যাডমিন'}
                 </p>
                 <p className="text-[10px] text-emerald-400 font-extrabold flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>

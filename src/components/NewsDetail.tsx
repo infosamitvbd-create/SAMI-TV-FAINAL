@@ -288,7 +288,7 @@ export const NewsDetail: React.FC<NewsDetailProps> = ({ news: initialNews, onBac
       </AnimatePresence>
 
       {/* Top Header Breadcrumbs & Action Bar */}
-      <div className="bg-white border-b border-slate-200/90 lg:sticky lg:top-10 z-30 shadow-2xs">
+      <div className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-40 shadow-xs transition-shadow">
         <div className="w-full max-w-[1650px] mx-auto px-2.5 sm:px-6 lg:px-8 py-1.5 sm:py-2.5 lg:py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 lg:gap-3 overflow-hidden">
             <button 
@@ -521,7 +521,7 @@ export const NewsDetail: React.FC<NewsDetailProps> = ({ news: initialNews, onBac
               {/* Desktop Split Reading Layout: Sticky Reader Rail + Editorial Body */}
               <div className="flex gap-8 items-start">
                 {/* PC Sticky Left Utility Rail */}
-                <div className="hidden xl:flex flex-col items-center gap-2.5 sticky top-28 w-11 shrink-0 pt-1">
+                <div className="hidden xl:flex flex-col items-center gap-2.5 sticky top-20 w-11 shrink-0 pt-1">
                   <button
                     onClick={() => handleReaction('love')}
                     title="পছন্দ করুন"
@@ -962,7 +962,7 @@ export const NewsDetail: React.FC<NewsDetailProps> = ({ news: initialNews, onBac
           </main>
 
           {/* Right Sidebar Column */}
-          <aside className="col-span-1 lg:col-span-4 xl:col-span-4 space-y-3.5 sm:space-y-6 lg:sticky lg:top-24">
+          <aside className="col-span-1 lg:col-span-4 xl:col-span-4 space-y-3.5 sm:space-y-6 lg:sticky lg:top-16">
             
             {/* Most Read (সর্বাধিক পঠিত) Widget */}
             {/* MOBILE ONLY: 3-Column Compact Card Layout for সর্বাধিক পঠিত (Untouched) */}

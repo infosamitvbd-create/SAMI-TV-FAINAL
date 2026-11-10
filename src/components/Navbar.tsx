@@ -65,7 +65,7 @@ export const Navbar: React.FC<{
   };
 
   return (
-    <nav className="hidden lg:block bg-[#1a1a1a] text-white sticky top-0 z-50 shadow-md border-b border-black">
+    <nav className={`hidden lg:block bg-[#1a1a1a] text-white ${currentPage.startsWith('/news/') ? 'static' : 'sticky top-0'} z-50 shadow-md border-b border-black`}>
       <div className="container mx-auto px-4 flex items-center justify-between h-10 max-w-[1650px]">
         {/* Mobile Menu Toggle */}
         <div className="lg:hidden flex items-center">

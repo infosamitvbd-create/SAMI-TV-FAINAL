@@ -9,10 +9,15 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
     <footer className="bg-[#111111] text-white mt-auto border-t border-white/5 text-xs sm:text-[13px]">
       {/* Compact Minimalist Mobile Footer (<md) */}
       <div className="md:hidden px-4 py-6 space-y-4 text-center">
-        <div className="flex flex-col items-center gap-1.5" onClick={() => onNavigate('/')}>
-          <span className="text-base font-black tracking-tight text-white">
-            SAMI <span className="text-sami-red">TV</span>
-          </span>
+        <div 
+          className="flex flex-col items-center gap-2 cursor-pointer select-none transition-transform active:scale-95" 
+          onClick={() => {
+            sessionStorage.setItem('sami_login_mode', 'admin');
+            onNavigate('/admin');
+          }}
+          title="SAMI TV"
+        >
+          <SAMILogo className="scale-90 origin-center" />
           <p className="text-[11px] text-gray-400 font-medium max-w-xs">
             সর্বশেষ সংবাদ নির্ভুল ও বস্তুনিষ্ঠভাবে প্রকাশ করে সামি টিভি।
           </p>
@@ -44,18 +49,8 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
           </span>
         </div>
 
-        <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-500 font-semibold">
-          <span>© {currentYear} সামি টেলিভিশন</span>
-          <button
-            onClick={() => {
-              sessionStorage.setItem('sami_login_mode', 'admin');
-              onNavigate('/admin');
-            }}
-            className="text-gray-400 hover:text-white flex items-center gap-1"
-          >
-            <Lock size={11} />
-            <span>অ্যাডমিন</span>
-          </button>
+        <div className="pt-3 border-t border-white/10 flex items-center justify-center text-[11px] text-gray-500 font-semibold">
+          <span>© {currentYear} সামি টেলিভিশন। সর্বস্বত্ব সংরক্ষিত।</span>
         </div>
       </div>
 
@@ -64,7 +59,14 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-3 text-center md:text-left">
-            <div className="inline-block cursor-pointer" onClick={() => onNavigate('/')}>
+            <div 
+              className="inline-block cursor-pointer select-none transition-transform active:scale-95" 
+              onClick={() => {
+                sessionStorage.setItem('sami_login_mode', 'admin');
+                onNavigate('/admin');
+              }}
+              title="SAMI TV"
+            >
               <SAMILogo className="scale-100 md:scale-110 origin-center md:origin-left -ml-1 md:ml-0" />
             </div>
             <p className="text-gray-400 leading-relaxed max-w-sm mx-auto md:mx-0 font-medium">
@@ -216,18 +218,6 @@ export const Footer: React.FC<{ onNavigate: (page: string) => void }> = ({ onNav
           <p>© {currentYear} সামি টেলিভিশন। সর্বস্বত্ব সংরক্ষিত।</p>
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <p className="font-sans">DEVELOPED BY <a href="https://mahmudulhasansami12.netlify.app/" target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-red-500 transition-colors cursor-pointer">Emran Hasan Sami</a></p>
-            <span className="text-gray-700">·</span>
-            <button 
-              onClick={() => {
-                sessionStorage.setItem('sami_login_mode', 'admin');
-                onNavigate('/admin');
-              }}
-              className="text-gray-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer py-0.5 px-1.5 rounded hover:bg-white/5"
-              title="অ্যাডমিন প্যানেল"
-            >
-              <Lock size={11} className="text-gray-400" />
-              <span>অ্যাডমিন</span>
-            </button>
           </div>
         </div>
       </div>

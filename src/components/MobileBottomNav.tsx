@@ -462,11 +462,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ onNavigate, cu
                       </button>
 
                       <button
-                        onClick={() => handleNavigateAndClose('/admin')}
+                        onClick={() => {
+                          sessionStorage.setItem('sami_login_mode', 'journalist');
+                          handleNavigateAndClose('/admin');
+                        }}
                         className="py-2.5 px-3 rounded-xl bg-slate-900 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <User size={15} />
-                        <span>প্রতিনিধি / এডমিন লগইন</span>
+                        <span>প্রতিনিধি লগইন</span>
                       </button>
                     </div>
                   </div>

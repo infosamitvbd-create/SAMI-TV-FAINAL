@@ -94,7 +94,7 @@ export const Header: React.FC<{
   };
 
   return (
-    <header className="bg-white sticky top-0 z-40 lg:static">
+    <header className={`bg-white ${currentPage.startsWith('/news/') ? 'static' : 'sticky top-0'} z-40 lg:static`}>
       {/* Clean & Professional Mobile Header + Category Strip (Hidden on Desktop) */}
       <div className="lg:hidden bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
         {/* Row 1: Compact Mobile App Bar */}
@@ -322,12 +322,13 @@ export const Header: React.FC<{
                   <span className="text-slate-400">© SAMI TV</span>
                   <button
                     onClick={() => {
+                      sessionStorage.setItem('sami_login_mode', 'journalist');
                       onNavigate('/admin');
                       setCategoryDrawerOpen(false);
                     }}
                     className="text-sami-red hover:underline font-bold cursor-pointer"
                   >
-                    এডমিন ও প্রতিনিধি লগইন →
+                    প্রতিনিধি লগইন →
                   </button>
                 </div>
               </div>
@@ -485,8 +486,8 @@ export const Header: React.FC<{
           title="বিজ্ঞাপন"
         >
           <motion.img
-            src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgrt6f7LO-WIoFF_w2-Vl6PcdamY1y93md6unJUch7fPN4HIANXlP3-zSIlqXanyKM3T254QePtWlUYN-9skfkO-CVnHWYFHWW_Bj6TmCrtwN6Y_o54toGdztbaMQ4yQmPUvXTkSqK4SEZ3Uqz5HAh-5lx7n3j9XDYHXVsoKLmxnnC3EsPFto8RprO3urI/s320/kashem_cable_banner_1000x90.jpg"
-            alt="Sponsored Ad - Kashem Cable"
+            src="https://tpc.googlesyndication.com/simgad/1294421558191477592"
+            alt="Sponsored Ad"
             className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-[1.01]"
             referrerPolicy="no-referrer"
           />
