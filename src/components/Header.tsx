@@ -182,6 +182,30 @@ export const Header: React.FC<{
           {/* Subtle right fade edge indicator for horizontal scroll */}
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent" />
         </div>
+
+        {/* Row 3: Compact Mobile Ad Banner ("onek small kore") */}
+        {currentPage !== '/admin' && (
+          <div className="border-t border-slate-100 bg-slate-50/70 py-1 sm:py-1.5 px-3 flex justify-center items-center">
+            <motion.div
+              onClick={() => onNavigate('/contact')}
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-full max-w-[340px] xs:max-w-[380px] sm:max-w-[460px] md:max-w-[560px] h-[38px] sm:h-[44px] md:h-[50px] relative cursor-pointer overflow-hidden rounded-lg border border-slate-200/90 bg-white flex items-center justify-center group shadow-2xs hover:border-slate-300 transition-colors"
+              title="বিজ্ঞাপন"
+            >
+              <img
+                src="https://tpc.googlesyndication.com/simgad/1294421558191477592"
+                alt="Sponsored Ad"
+                className="w-full h-full object-contain p-0.5 transition-transform duration-300 group-hover:scale-[1.02]"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute top-0.5 right-1 bg-black/75 backdrop-blur-xs text-[7px] font-black text-white/90 px-1 py-0.2 rounded uppercase tracking-wider pointer-events-none border border-white/10 z-10 shadow-xs">
+                Sponsored Ad
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Navigation Slide-Over Drawer */}
